@@ -20,7 +20,6 @@ isso para cada tipo de representação (em algumas a forma de se calcular esse e
 toda imagem é carregada como RGB.
 
 image::regions_result.png[width=30%,align=center]
-//[width=65%,align=center]
 
 === switch_regions.cpp
 
@@ -57,7 +56,7 @@ video::VqviqsYr08Y[youtube,align=center, width=600, height=600]
 ====
 [source,c++, linenums]
 ----
-include::switch_regions.cpp[]
+include::regions.cpp[]
 ----
 ====
 

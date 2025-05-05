@@ -553,111 +553,100 @@ porque ele aceita tipos ao invés de valores máximos)</p>
 #include&lt;lyra/lyra.hpp&gt;
 #include&lt;opencv2/opencv.hpp&gt;
 
-std::string window_name = "switch_regions";
-bool pressing_left = false;
-bool slide_enable = false;
-cv::Mat redraw_image;
-cv::Vec2i last_pos = {0,0};
-cv::Vec2i velocity = {0,0};
+cv::Vec2i rectangle_vertex[2] = {{0,0},{0,0}};
+cv::Vec2i points[2] = {{0,0},{0,0}};
+uint8_t selected_points_counter = 0;
+std::string window_name = "regions";
+bool has_draw = false;
+bool first_two_done = false;
 
-void redraw_window(std::string win_name, cv::Vec2i div_point, void* image_ptr_opaque){
-    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
+inline constexpr uint64_t calc_sqr_dist(int x1, int y1, int x2, int y2){
+    return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+}
 
-    if (div_point[0] == 0 || div_point[1] == 0){
-        printf("Cancelling redraw 'cause OpenCV doesn't like degenerate rectangles.\n");
-        return;
+cv::Vec3b calc_negative_color(cv::Vec3b input_color){
+    cv::Vec3b res;
+    res[0] = 255 - input_color[0];
+    res[1] = 255 - input_color[1];
+    res[2] = 255 - input_color[2];
+    return res;
+}
+
+void negativeRect(cv::Mat* image, int x1, int y1, int x2, int y2){
+    int low_x, high_x, low_y, high_y;
+    if (x1 &gt; x2){low_x = x2; high_x = x1;} else {low_x = x1; high_x = x2;}
+    if (y1 &gt; y2){low_y = y2; high_y = y1;} else {low_y = y1; high_y = y2;}
+    for (int j = low_y; j &lt;= high_y; j++){
+        for (int i = low_x; i &lt;= high_x; i++){
+            image-&gt;at&lt;cv::Vec3b&gt;(j, i) = calc_negative_color(image-&gt;at&lt;cv::Vec3b&gt;(j, i));
+        }
     }
+}
+
+void redraw_window(std::string win_name, cv::Vec2i new_points[2], cv::Vec2i point_buffer[2],
+    uint8_t selected_points_counter, bool* has_draw_ptr, void* image_ptr_opaque){
+    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
     
+    if (*has_draw_ptr){
+        negativeRect(image_ptr, point_buffer[0][0], point_buffer[0][1], point_buffer[1][0],
+            point_buffer[1][1]);
+    }
 
-    auto left_div_rem = image_ptr-&gt;cols - div_point[0];
-    auto up_div_rem = image_ptr-&gt;rows - div_point[1];
-    
-    //this was the first try, it would get the cross on the opposite side
-    //cv::Mat top_left(*image_ptr, cv::Rect(0,0, div_point[0], div_point[1]));
-    //cv::Mat bottom_left(*image_ptr, cv::Rect(0,div_point[1], div_point[0], up_div_rem));
-    //cv::Mat top_right(*image_ptr, cv::Rect(div_point[0], 0, left_div_rem, div_point[1]));
-    //cv::Mat bottom_right(*image_ptr, cv::Rect(div_point[0], div_point[1], left_div_rem, up_div_rem));
+    if (selected_points_counter == 2){
+        negativeRect(image_ptr, new_points[0][0], new_points[0][1], new_points[1][0], new_points[1][1]);
+        *has_draw_ptr = true;
+        point_buffer[0] = new_points[0];
+        point_buffer[1] = new_points[1];
+        cv::imshow(win_name, *image_ptr);
+    } else{
+        if (*has_draw_ptr){cv::imshow(win_name, *image_ptr);}
+        *has_draw_ptr = false;
+    }
+}
 
-    //bottom_right.copyTo(
-    //    redraw_image(cv::Rect(0, 0, left_div_rem, up_div_rem))
-    //);
-    //bottom_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,0, div_point[0], up_div_rem))
-    //);
-    //top_right.copyTo(
-    //    redraw_image(cv::Rect(0, up_div_rem, left_div_rem, div_point[1]))
-    //);
-    //top_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,up_div_rem, div_point[0], div_point[1]))
-    //);
-
-    cv::Mat top_left(*image_ptr, cv::Rect(0,0, left_div_rem, up_div_rem));
-    cv::Mat bottom_left(*image_ptr, cv::Rect(0,up_div_rem, left_div_rem, div_point[1]));
-    cv::Mat top_right(*image_ptr, cv::Rect(left_div_rem, 0, div_point[0], up_div_rem));
-    cv::Mat bottom_right(*image_ptr, cv::Rect(left_div_rem, up_div_rem, div_point[0], div_point[1]));
-
-    bottom_right.copyTo(
-        redraw_image(cv::Rect(0, 0, div_point[0], div_point[1]))
-    );
-    bottom_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],0, left_div_rem, div_point[1]))
-    );
-    top_right.copyTo(
-        redraw_image(cv::Rect(0, div_point[1], div_point[0], up_div_rem))
-    );
-    top_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],div_point[1], left_div_rem, up_div_rem))
-    );
-
-    cv::imshow(win_name, redraw_image);
+uint32_t closest_point_index(int x, int y, cv::Vec2i* point_list, uint8_t list_size){
+    uint32_t res_index = 0;
+    cv::Vec2i curr_point = point_list[0];
+    uint64_t min_square_distance = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
+    uint64_t candidate;
+    for (auto i = 1; i &lt; list_size; i++){
+        curr_point = point_list[i];
+        candidate = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
+        if (candidate &lt; min_square_distance){
+            min_square_distance = candidate;
+            res_index = i;
+        }
+    }
+    return res_index;
 }
 
 void mouse_callback(int event, int x, int y, int flags, void* userdata){
-    cv::Vec2i div_point = {x, y};
-    switch (event){
+    uint32_t index = 0;
+    switch (event)
+    {
     case cv::EVENT_LBUTTONDOWN:
-        pressing_left = true;
-        redraw_window(window_name, div_point, userdata);
-        last_pos[0] = x; last_pos[1] = y;
-        velocity[0] = 0; velocity[1] = 0;
-        break;
-    case cv::EVENT_LBUTTONUP:
-        pressing_left = false;
-        break;
-    case cv::EVENT_MBUTTONDOWN:
-        slide_enable = !slide_enable;
-        break;
-    case cv::EVENT_MOUSEMOVE:
-        if (pressing_left){
-            redraw_window(window_name, div_point, userdata);
-            if (slide_enable){
-                velocity[0] = x - last_pos[0]; velocity[1] = y - last_pos[1];
-            }
-            last_pos[0] = x; last_pos[1] = y;
+        
+        if (selected_points_counter == 2){
+            index = closest_point_index(x, y, points, 2);
+        } else {
+            index = selected_points_counter;
         }
+        points[index][0] = x;
+        points[index][1] = y;
+        selected_points_counter = selected_points_counter &lt; 2 ? selected_points_counter+1 : 2;
+        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
         break;
     case cv::EVENT_RBUTTONDOWN:
-        cv::imshow(window_name, *((cv::Mat*) userdata));
-        velocity[0] = 0; velocity[1] = 0;
-        last_pos[0] = 0; last_pos[1] = 0;
+        index = selected_points_counter;
+        selected_points_counter = selected_points_counter == 0 ? 0 : selected_points_counter-1;
+        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
         break;
     default:
         break;
     }
 }
 
-void animation_loop(cv::Mat *image){
-    if (slide_enable &amp;&amp; !pressing_left){
-        last_pos[0] = (last_pos[0]+velocity[0]);
-        last_pos[1] = (last_pos[1]+velocity[1]);
-        last_pos[0] = last_pos[0] &lt; 0 ? image-&gt;cols + last_pos[0] : last_pos[0]%image-&gt;cols;
-        last_pos[1] = last_pos[1] &lt; 0 ? image-&gt;rows + last_pos[1] : last_pos[1]%image-&gt;rows;
-
-        redraw_window(window_name, last_pos, (void*) image);
-    }
-}
-
-constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of a division point that will divide and rearrange the image. Left-click to select a point, hold it to keep moving the point. Right-click resets. Middle (scroll-wheel) mouse button will enable/disable sliding mode, which estimates a linear velocity when you hold the image and keeps it after you release.";
+constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of two oposing vertex of a rectangle that will paint itself by the image's negative within its area. Left-click to select points, right-click to deselect one.";
 
 int main(int argc, char** argv) {
     std::string image_path;
@@ -682,20 +671,14 @@ int main(int argc, char** argv) {
     cv::Mat image;
     cv::Vec3b val;
 
-    image = cv::imread(image_path);
+    image = cv::imread(image_path, cv::IMREAD_COLOR);
     if (image.empty()){printf("Failed to read image in %s.\n", image_path.c_str()); exit(1);}
-    redraw_image = image.clone();
 
 
     cv::namedWindow(window_name, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL);
     cv::setMouseCallback(window_name, mouse_callback, &amp;image);
     cv::imshow(window_name, image);
-    auto k = cv::waitKey(10);
-    while (k == -1){
-        animation_loop(&amp;image);
-        k = cv::waitKey(10);
-    }
-    
+    cv::waitKey();
     return 0;
 }</code></pre>
 </div>
