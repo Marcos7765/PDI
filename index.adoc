@@ -1,0 +1,20 @@
+[.text-justify]
+= Processamento Digital de Imagens
+Marcos Irigoyen <mvbirigoyen@gmail.com>
+:toc: left
+:doctype: book
+:stem: latexmath
+:max-width: 80%
+:figure-caption: Figura
+:reproducible:
+:toc-title: Sumário
+:toclevels: 2
+:source-highlighter: highlight.js
+:multipage-level: 1
+:imagesdir: resources
+
+Olá, esta é a página index provisória para os relatórios da matéria Processamento Digital de Imagens.
+
+[[pixels]]
+[desc="Exercícios do Capítulo 2. Manipulando pixels em uma imagem"]
+include::exercicio_1/Exercicio.adoc[]

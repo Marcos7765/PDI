@@ -1,0 +1,71 @@
+== regions.cpp e switch_regions.cpp
+
+=== Imagem Base
+A cobaia para os resultados desse exercício será a cachorra Lurana. Segue a imagem base onde podemos ver que ela está
+muito contente em permitir que eu use sua imagem.
+
+image::Lulu.jpg[width=30%,align=center]
+
+=== regions.cpp
+
+Para receber a entrada dos pontos do retângulo, explorei um pouco o `highgui` do OpenCV para poder receber entrada do
+mouse. Para selecionar o primeiro e segundo ponto basta usar o botão esquerdo. Para desselecionar um ponto, use o botão
+direito (não necessariamente desselecionará o último ponto que você selecionou). Caso já tenha selecionado dois pontos,
+selecionar outro ponto com o botão esquerdo irá mover a seleção anterior mais próxima ao ponto. Para sair, basta usar
+qualquer tecla ou fechar a janela.
+
+Para o efeito de negativo são pegos os valores da cor de cada pixel contido no retângulo e calculado seu complemento em
+relação ao máximo da capacidade de representação do tipo (para cada canal). Como não tem uma forma simples de fazer
+isso para cada tipo de representação (em algumas a forma de se calcular esse efeito pode ser completamente diferente),
+toda imagem é carregada como RGB.
+
+image::regions_result.png[width=30%,align=center]
+//[width=65%,align=center]
+
+=== switch_regions.cpp
+
+Primeiramente, o "uso da classe `cv::Mat` e esus construtores para criar as regiões que serão trocadas" do enunciado do
+exercício se refere a capacidade de criar submatrizes de uma matriz pré-existente através da chamada dessa matriz com
+parâmetros para especificar a região de interesse (i.e, de onde a submatriz se baseia). Com isso, podemos pegar as
+coordenadas do ponto central e obter os vértices opostos de quatro regiões de interesse: latexmath:[Q_1 = ((0,0),(X/2 -1,Y/2 -1)); Q_2 = ((0,Y/2),(X/2 -1,Y)); Q_3 = ((X/2,0),(X-1,Y/2)); Q_4 = ((X/2,Y/2),(X-1,Y-1))].
+
+Como bônus, generalizei o programa para que o ponto onde seja feito essa divisão fosse uma entrada, podendo ser posto
+com o botão esquerdo e arrastado segurando o botão; e adicionei um modo de _slide_, alternável pelo botão do meio do
+mouse, que calcula uma velocidade baseado no final do arrasto da seleção e a altera o ponto de divisão (pensei em
+chamar de pivô), dando a volta na matriz em caso fosse passar os limites da imagem.
+
+image::switch_regions_result.png[width=30%,align=center]
+
+Tive dois problemas interessantes nessa implementação, com o primeiro sendo: quando o ponto de divisão era tal que o
+lado de um dos quadrados fosse 0 (quando o ponto está no limite da imagem), o OpenCV não permitia a criação da 
+submatriz. Este problema, por preguiça, não foi solucionado: você poderia checar a colisão e pular os retângulos que
+seriam inválidos ou algo do tipo, mas preferi só não fazer alterações para esse caso e retornar cedo nesses casos.
+
+O segundo problema era na atualização da posição no modo _slide_. Para fazer o ajuste da posição para o intervalo da
+imagem, eu estava usando o operador % como módulo, enquanto que o operador calcula o resto da divisão inteira. Com isso,
+novos valores de posição continuariam negativos e subindo as exceções do OpenCV. Para corrigir isso, coloquei uma
+checagem de números negativos para fazer o _wrap around_ com soma. (não poderia ser resolvível com o saturated_cast
+porque ele aceita tipos ao invés de valores máximos)
+
+.Extra: vídeo do sliding com música de fundo
+video::VqviqsYr08Y[youtube,align=center, width=600, height=600]
+
+=== Íntegra dos códigos
+
+.regions.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::switch_regions.cpp[]
+----
+====
+
+.switch_regions.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::switch_regions.cpp[]
+----
+====
