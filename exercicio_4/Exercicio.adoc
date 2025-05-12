@@ -1,0 +1,69 @@
+== labeling.cpp
+
+O nome do arquivo está errado e fiquei com preguiça de trackear e ajeitar por aí, o certo é labelling.
+
+Primeiramente, para o problema de contagem proposto, ele ocorrerá a partir do momento que tiverem 255 ou mais objetos e
+a varredura pela matriz alcance o segundo pixel do 255o objeto (alternativamente, caso ele tenha só um pixel, o 256o
+objeto estoura o contador, fazendo ele voltar pra 0), como a cor que o identifica é a mesma de objetos não
+identificados, ele é contado novamente e o valor do contador estoura.
+
+Para solucionar esse problema existem várias opções, mas quase todas (para não dizer todas) separarão a cor do
+identificador do objeto do seu valor no contador e aumentarão a capacidade do contador: você pode alterar o floodfill
+para adicionar a posição do pixel a uma lista de objetos, onde cada objeto tem sua lista de pixeis, e a cor pintada é a
+mesma do fundo; você pode usar uma imagem RGB e um mapa de cores para relacionar cada valor do contador à tripla RGB,
+expandindo a capacidade para 24 bits; ou você pode somente aumentar a capacidade do contador e da escala de cinza da
+imagem, com riscos de não poder visualizar a informação a depender do visualizador (tanto software quanto hardware).
+Apesar de não ser necessário, a implementação do labelling pro próximo problema usa um mapa de cores.
+
+Para a contagem das bolhas, um único detalhe impedia o uso da solução apresentada no vídeo e (de onde eu lembro) da
+sala de aula: a possibilidade de uma bolha conter múltiplos buracos. Como solução, podemos usar do fato de que todo
+buraco está envolto por um objeto colorido de acordo com seu identificador, logo cada buraco é alcançado após já se ter
+alcançado o objeto associado a ele. Guardando a informação do último objeto acessado e uma lista de flags onde cada flag
+se refere a um objeto ter ou não bolhas, podemos evitar a contagem de uma bolha com mais de um buraco como a de
+múltiplas bolhas. O excerto de código abaixo faz essa desambiguação:
+
+[source,c++, linenums]
+----
+    //background_color e object_color estão trocados
+    uint32_t bubble_count = 0;
+    uint32_t last_object = 0;
+    bool* has_bubble = new bool[count](); //initializes all values to false
+    for (auto j = 0; j < image.cols; j++){
+        for (auto i = 0; i < image.rows; i++){
+            cv::Point2l pos = {j, i};
+            if (compare_colors(image.at<typeof(target_color)>(i, j), background_color)){
+                if (!has_bubble[last_object-1]){
+                    bubble_count++;
+                    has_bubble[last_object-1] = true;
+                }
+                cv::floodFill(image, pos, map_color(last_object));
+            } else{
+                if (!compare_colors(image.at<typeof(target_color)>(i, j), object_color)){
+                    last_object = unmap_color(image.at<typeof(target_color)>(i, j));
+                }
+            }
+        }
+    }
+----
+E testando na imagem ligeiramente alterada para conter uma bolha com múltiplos buracos abaixo:
+image::bolhas_2.png[height=20%,align=center]
+
+Temos 21 objetos, dos quais 7 são bolhas, representados na imagem resultado (a imagem não representa as bolhas):
+
+image::labelling_labelled.png[height=20%,align=center]
+
+=== Relacionados
+
+- O próprio link:https://youtu.be/aexbvMzCGK4?list=PLWWAoQUirHNruwCBxOgBhHKXdf7et_rAO[vídeo da playlist de PDI] sobre o
+exercício.
+
+=== Íntegra dos códigos
+
+.labeling.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::labeling.cpp[]
+----
+====

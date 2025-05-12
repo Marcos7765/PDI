@@ -1,0 +1,59 @@
+== filestorage.cpp
+
+A parte de "que gere uma imagem de dimensões 256x256 pixels contendo uma senóide de 4 períodos com amplitude igual 127 desenhada na horizontal" é basicamente a mudança das variáveis do programa-exemplo da questão, então o que mais se
+alterou no código foi para análise.
+
+Antes mesmo de rodar qualquer coisa, vale pensar nas formas que diferenças entre as serializações da matriz poderiam aparecer. A "imagem" original é descrita pela função latexmath:[g(x, y) = 127*\sin{2 \pi f x} + 128], com f representando a frequência, que está sendo calculada por latexmath:[f = \frac{P}{x_{max}}] (com P sendo quantos períodos se deseja ter de 0 a latexmath:[x_{max}]), e mapeia as pixels da função a valores em ponto flutuante. Para serializar os dados para PNG,
+realizamos a normalização (que, apesar de já poder causar perda de informação, não se costuma considerar) e a conversão
+para inteiro, onde necessariamente perdemos informação. Para a serialização para YAML, apesar de não ser feita essas
+transformações, temos a conversão dos valores para texto, onde pode haver perda de informação.
+
+Para fazer a comparação, podemos aproveitar do fato de que PNGs não causam perda de informação na sua encodificação e
+usar diretamente a matriz normalizada e convertida a partir da matriz original. A comparação pedida é entre a versão em PNG e a versão em YAML, mas também foram feitas algumas comparações extras com a matriz original para analisar as perdas da serialização por YAML.
+
+Para análise dos dados para plot, foi implementada uma flag para imprimir o .csv das diferenças na saída. Basta
+redirecionar a saída para um arquivo (como o `dados.csv` no repositório), daí basta executar o script `plot_data.py`
+com o caminho do .csv. Para a comparação pedida, temos:
+
+image::CROSS_DIFF_graph.svg[height=20%,align=center]
+
+Onde a diferença é causada pela normalização e conversão para inteiro usadas para armazenar a imagem em inteiros de
+8 bits de capacidade. Esta diferença, entretanto, não é significante para a imagem a ser renderizada na tela,
+conforme podemos ver no gráfico a seguir da diferença entra a versão YAML normalizada e convertida para inteiros de
+8 bits.
+
+image::INTEGER_DIFF_graph.svg[height=20%,align=center]
+
+E enquanto poderíamos assumir que há um fator de perda causado pela serialização em YAML, vemos pelo próximo
+gráfico, comparando a versão original à serializada, que não há diferença.
+
+image::FLOAT_DIFF_graph.svg[height=20%,align=center]
+
+Logo, a diferença entre a versão em PNG e a versão em YAML é a mesma diferença da versão em PNG para a versão
+original. Isso acontece pela formatação dos floats para texto em YAML: para evitar perda de informação na mantissa,
+são impressos em até 8 casas decimais de precisão, de forma que toda a mantissa de 24 bits para a especificação de
+número em ponto flutuante de 32 bits que costumamos usar (IEEE 754) seja mantida. Para verificar isso, encontrar um float com 8 casas decimais por um teste com `cat <arquivo yaml> | grep -m 1 -Po "[0-9]*\.[0-9]{8}" | head -n 1` é condição suficiente para provar que são usados 8 caracteres. Caso não tenha encontrado ou prefira uma prova mais concreta, tanto as funções de serialização para string `floatToString` e `doubleToString` do arquivo `persistence.cpp` (que implementa as funções gerais do FileStorage) garantem as 8 casas decimais quando necessário quanto a implementação específica da leitura e escrita para YAML em `persistence_yml.cpp` redireciona a escrita de valores em ponto flutuante para a função `doubleToString`.
+
+=== Relacionados
+
+- Página do link:https://github.com/opencv/opencv/blob/4.x/modules/core/src/persistence_yml.cpp[persistence_yml.cpp] e link:https://github.com/opencv/opencv/blob/4.x/modules/core/src/persistence.cpp[persistence.cpp], que só soube onde procurar pelo doxygen do OpenCV.
+
+=== Íntegra dos códigos
+
+.filestorage.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::filestorage.cpp[]
+----
+====
+
+.plot_data.py
+[%collapsible]
+====
+[source,python, linenums]
+----
+include::plot_data.py[]
+----
+====

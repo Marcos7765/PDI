@@ -1,0 +1,36 @@
+== decoder.cpp
+
+Para este exercício eu já tinha minha versão própria versão de `bitplanes.c`, disponível na pasta `toys` do repositório,
+que aplicava bitmasks arbitrátrias em imagens. Bastou adicionar funcionalidades para receber a máscara e o tamanho do
+bitshift esquerdo para ter tudo pronto. Como também bateu a preguiça, criei a `utils.hpp` para repetir menos para cada
+leitura e escrita de imagens. Como consequência desses dois, o tocante à decriptação na main ficou:
+
+[source,c++, linenums]
+----
+cv::Mat image = default_imread(image_path);
+    //all of the above on main was just handling input
+    default_imshow(window_name, image);
+    
+    cv::Mat decoded_image = apply_bitmask(image, bitmask);
+    apply_bitshift(decoded_image, bit_shift);
+----
+
+E aplicando à imagem fornecida, podemos ver o que parece ser a vista de uma sopa sobre uma mesa, com uma lata aberta
+sobre a mesa e uma janela de fundo, de onde se pode discernir o sol e as nuvens. Não será disponibilizada aqui a imagem.
+
+Inclusive, para deixar mais interessante, em `encoder.cpp` tem a minha versão do que o `bitplanes.c` da questão fazia.
+Usei ele para codificar uma imagem contendo uma senha. Esta senha é a senha de encriptação dos arquivos
+`decoder.cpp.gpg` e `encoded_passphrase.png.gpg`, que podem ser decriptados através do comando `gpg --decrypt <ARQUIVO>`
+e inserção da senha de encriptação no prompt da ferramenta. Para não dar trabalho demais, é a mesma máscara e tamanho de
+bitshift esquerdo de `desafio-esteganografia.png`. Abaixo segue a imagem com a senha encriptada:
+
+image::encoded_image_00000111_encoded.png[height=20%,align=center]
+
+=== Íntegra dos códigos
+
+.decoder.cpp
+[%collapsible]
+====
+image::encoded_image_00000111_encoded.png[height=20%,align=center]
+:)
+====

@@ -440,7 +440,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
              .nav-footer{text-align: center; margin-top: auto;}
              .nav-footer > p > a {white-space: nowrap;}</style>
 </head>
-<body id="pixels" class="book toc2 toc-left text-justify">
+<body id="labelling" class="book toc2 toc-left text-justify">
 <div id="header" style="max-width: 80%;">
 <h1>Processamento Digital de Imagens</h1>
 <div class="details">
@@ -450,107 +450,104 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Sumário</div>
 <p><span class="toc-root"><a href="index.html">Processamento Digital de Imagens</a></span></p><ul class="sectlevel1">
-<li><a href="pixels.html"><span class="toc-current">regions.cpp e switch_regions.cpp</span></a>
-<ul class="sectlevel2">
-<li><a href="pixels.html#_imagem_base">Imagem Base</a>
-</li>
-<li><a href="pixels.html#_regions_cpp">regions.cpp</a>
-</li>
-<li><a href="pixels.html#_switch_regions_cpp">switch_regions.cpp</a>
-</li>
-<li><a href="pixels.html#_íntegra_dos_códigos">Íntegra dos códigos</a>
-</li>
-</ul>
+<li><a href="pixels.html">regions.cpp e switch_regions.cpp</a>
 </li>
 <li><a href="filestorage.html">filestorage.cpp</a>
 </li>
 <li><a href="decoder.html">decoder.cpp</a>
 </li>
-<li><a href="labelling.html">labeling.cpp</a>
+<li><a href="labelling.html"><span class="toc-current">labeling.cpp</span></a>
+<ul class="sectlevel2">
+<li><a href="labelling.html#_relacionados_2">Relacionados</a>
+</li>
+<li><a href="labelling.html#_íntegra_dos_códigos_4">Íntegra dos códigos</a>
+</li>
+</ul>
 </li>
 </ul>
 </div>
 </div>
 <div id="content" style="max-width: 80%;">
 <div class="sect1">
-<h2 id="pixels">regions.cpp e switch_regions.cpp</h2>
+<h2 id="labelling">labeling.cpp</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_imagem_base">Imagem Base</h3>
 <div class="paragraph">
-<p>A cobaia para os resultados desse exercício será a cachorra Lurana. Segue a imagem base onde podemos ver que ela está
-muito contente em permitir que eu use sua imagem.</p>
+<p>O nome do arquivo está errado e fiquei com preguiça de trackear e ajeitar por aí, o certo é labelling.</p>
+</div>
+<div class="paragraph">
+<p>Primeiramente, para o problema de contagem proposto, ele ocorrerá a partir do momento que tiverem 255 ou mais objetos e
+a varredura pela matriz alcance o segundo pixel do 255o objeto (alternativamente, caso ele tenha só um pixel, o 256o
+objeto estoura o contador, fazendo ele voltar pra 0), como a cor que o identifica é a mesma de objetos não
+identificados, ele é contado novamente e o valor do contador estoura.</p>
+</div>
+<div class="paragraph">
+<p>Para solucionar esse problema existem várias opções, mas quase todas (para não dizer todas) separarão a cor do
+identificador do objeto do seu valor no contador e aumentarão a capacidade do contador: você pode alterar o floodfill
+para adicionar a posição do pixel a uma lista de objetos, onde cada objeto tem sua lista de pixeis, e a cor pintada é a
+mesma do fundo; você pode usar uma imagem RGB e um mapa de cores para relacionar cada valor do contador à tripla RGB,
+expandindo a capacidade para 24 bits; ou você pode somente aumentar a capacidade do contador e da escala de cinza da
+imagem, com riscos de não poder visualizar a informação a depender do visualizador (tanto software quanto hardware).
+Apesar de não ser necessário, a implementação do labelling pro próximo problema usa um mapa de cores.</p>
+</div>
+<div class="paragraph">
+<p>Para a contagem das bolhas, um único detalhe impedia o uso da solução apresentada no vídeo e (de onde eu lembro) da
+sala de aula: a possibilidade de uma bolha conter múltiplos buracos. Como solução, podemos usar do fato de que todo
+buraco está envolto por um objeto colorido de acordo com seu identificador, logo cada buraco é alcançado após já se ter
+alcançado o objeto associado a ele. Guardando a informação do último objeto acessado e uma lista de flags onde cada flag
+se refere a um objeto ter ou não bolhas, podemos evitar a contagem de uma bolha com mais de um buraco como a de
+múltiplas bolhas. O excerto de código abaixo faz essa desambiguação:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-c++ hljs" data-lang="c++">    //background_color e object_color estão trocados
+    uint32_t bubble_count = 0;
+    uint32_t last_object = 0;
+    bool* has_bubble = new bool[count](); //initializes all values to false
+    for (auto j = 0; j &lt; image.cols; j++){
+        for (auto i = 0; i &lt; image.rows; i++){
+            cv::Point2l pos = {j, i};
+            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), background_color)){
+                if (!has_bubble[last_object-1]){
+                    bubble_count++;
+                    has_bubble[last_object-1] = true;
+                }
+                cv::floodFill(image, pos, map_color(last_object));
+            } else{
+                if (!compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), object_color)){
+                    last_object = unmap_color(image.at&lt;typeof(target_color)&gt;(i, j));
+                }
+            }
+        }
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>E testando na imagem ligeiramente alterada para conter uma bolha com múltiplos buracos abaixo:
+image::bolhas_2.png[height=20%,align=center]</p>
+</div>
+<div class="paragraph">
+<p>Temos 21 objetos, dos quais 7 são bolhas, representados na imagem resultado (a imagem não representa as bolhas):</p>
 </div>
 <div class="imageblock text-center">
 <div class="content">
-<img src="resources/Lulu.jpg" alt="Lulu" width="30%">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_regions_cpp">regions.cpp</h3>
-<div class="paragraph">
-<p>Para receber a entrada dos pontos do retângulo, explorei um pouco o <code>highgui</code> do OpenCV para poder receber entrada do
-mouse. Para selecionar o primeiro e segundo ponto basta usar o botão esquerdo. Para desselecionar um ponto, use o botão
-direito (não necessariamente desselecionará o último ponto que você selecionou). Caso já tenha selecionado dois pontos,
-selecionar outro ponto com o botão esquerdo irá mover a seleção anterior mais próxima ao ponto. Para sair, basta usar
-qualquer tecla ou fechar a janela.</p>
-</div>
-<div class="paragraph">
-<p>Para o efeito de negativo são pegos os valores da cor de cada pixel contido no retângulo e calculado seu complemento em
-relação ao máximo da capacidade de representação do tipo (para cada canal). Como não tem uma forma simples de fazer
-isso para cada tipo de representação (em algumas a forma de se calcular esse efeito pode ser completamente diferente),
-toda imagem é carregada como RGB.</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="resources/regions_result.png" alt="regions result" width="30%">
-</div>
+<img src="resources/labelling_labelled.png" alt="labelling labelled" height="20%">
 </div>
 </div>
 <div class="sect2">
-<h3 id="_switch_regions_cpp">switch_regions.cpp</h3>
-<div class="paragraph">
-<p>Primeiramente, o "uso da classe <code>cv::Mat</code> e esus construtores para criar as regiões que serão trocadas" do enunciado do
-exercício se refere a capacidade de criar submatrizes de uma matriz pré-existente através da chamada dessa matriz com
-parâmetros para especificar a região de interesse (i.e, de onde a submatriz se baseia). Com isso, podemos pegar as
-coordenadas do ponto central e obter os vértices opostos de quatro regiões de interesse: \(Q_1 = ((0,0),(X/2 -1,Y/2 -1)); Q_2 = ((0,Y/2),(X/2 -1,Y)); Q_3 = ((X/2,0),(X-1,Y/2)); Q_4 = ((X/2,Y/2),(X-1,Y-1))\).</p>
-</div>
-<div class="paragraph">
-<p>Como bônus, generalizei o programa para que o ponto onde seja feito essa divisão fosse uma entrada, podendo ser posto
-com o botão esquerdo e arrastado segurando o botão; e adicionei um modo de <em>slide</em>, alternável pelo botão do meio do
-mouse, que calcula uma velocidade baseado no final do arrasto da seleção e a altera o ponto de divisão (pensei em
-chamar de pivô), dando a volta na matriz em caso fosse passar os limites da imagem.</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="resources/switch_regions_result.png" alt="switch regions result" width="30%">
-</div>
-</div>
-<div class="paragraph">
-<p>Tive dois problemas interessantes nessa implementação, com o primeiro sendo: quando o ponto de divisão era tal que o
-lado de um dos quadrados fosse 0 (quando o ponto está no limite da imagem), o OpenCV não permitia a criação da
-submatriz. Este problema, por preguiça, não foi solucionado: você poderia checar a colisão e pular os retângulos que
-seriam inválidos ou algo do tipo, mas preferi só não fazer alterações para esse caso e retornar cedo nesses casos.</p>
-</div>
-<div class="paragraph">
-<p>O segundo problema era na atualização da posição no modo <em>slide</em>. Para fazer o ajuste da posição para o intervalo da
-imagem, eu estava usando o operador % como módulo, enquanto que o operador calcula o resto da divisão inteira. Com isso,
-novos valores de posição continuariam negativos e subindo as exceções do OpenCV. Para corrigir isso, coloquei uma
-checagem de números negativos para fazer o <em>wrap around</em> com soma. (não poderia ser resolvível com o saturated_cast
-porque ele aceita tipos ao invés de valores máximos)</p>
-</div>
-<div class="videoblock text-center">
-<div class="title">Extra: vídeo do sliding com música de fundo</div>
-<div class="content">
-<iframe width="600" height="600" src="https://www.youtube.com/embed/VqviqsYr08Y?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<h3 id="_relacionados_2">Relacionados</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>O próprio <a href="https://youtu.be/aexbvMzCGK4?list=PLWWAoQUirHNruwCBxOgBhHKXdf7et_rAO">vídeo da playlist de PDI</a> sobre o
+exercício.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_íntegra_dos_códigos">Íntegra dos códigos</h3>
+<h3 id="_íntegra_dos_códigos_4">Íntegra dos códigos</h3>
 <details>
-<summary class="title">regions.cpp</summary>
+<summary class="title">labeling.cpp</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
@@ -558,110 +555,63 @@ porque ele aceita tipos ao invés de valores máximos)</p>
 #include&lt;iostream&gt;
 #include&lt;lyra/lyra.hpp&gt;
 #include&lt;opencv2/opencv.hpp&gt;
+#include&lt;utils.hpp&gt;
 
-cv::Vec2i rectangle_vertex[2] = {{0,0},{0,0}};
-cv::Vec2i points[2] = {{0,0},{0,0}};
-uint8_t selected_points_counter = 0;
-std::string window_name = "regions";
-bool has_draw = false;
-bool first_two_done = false;
+std::string window_name = "labelling";
+constexpr const char* help_msg = "Labelling algorithm example";
+constexpr const char* default_output_path = "labelling";
 
-inline constexpr uint64_t calc_sqr_dist(int x1, int y1, int x2, int y2){
-    return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+template &lt;typename T, uint8_t bytesize = 8&gt;
+constexpr inline T gen_ones_mask(uint8_t length, uint8_t leftshift){
+    return (( ~((T) 0) &gt;&gt; (sizeof(T)*bytesize - length)) &lt;&lt; leftshift);
 }
 
-cv::Vec3b calc_negative_color(cv::Vec3b input_color){
-    cv::Vec3b res;
-    res[0] = 255 - input_color[0];
-    res[1] = 255 - input_color[1];
-    res[2] = 255 - input_color[2];
+bool compare_colors(cv::Vec3b color_a, cv::Vec3b color_b){
+    bool res = true;
+    for (auto i = 0; i &lt; 3; i++){
+        res &amp;= color_a[i] == color_b[i];
+    }
     return res;
 }
 
-void negativeRect(cv::Mat* image, int x1, int y1, int x2, int y2){
-    int low_x, high_x, low_y, high_y;
-    if (x1 &gt; x2){low_x = x2; high_x = x1;} else {low_x = x1; high_x = x2;}
-    if (y1 &gt; y2){low_y = y2; high_y = y1;} else {low_y = y1; high_y = y2;}
-    for (int j = low_y; j &lt;= high_y; j++){
-        for (int i = low_x; i &lt;= high_x; i++){
-            image-&gt;at&lt;cv::Vec3b&gt;(j, i) = calc_negative_color(image-&gt;at&lt;cv::Vec3b&gt;(j, i));
-        }
-    }
+//aint linear but surely is injective for input_value &lt; 2^25 -1
+cv::Vec3b map_color(uint32_t input_value){
+    cv::Vec3b result = {0,0,0};
+    result[0] = (input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 16)) &gt;&gt; 16;
+    result[1] = (input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 8)) &gt;&gt; 8;
+    result[2] = input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 0);
+    return result;
 }
 
-void redraw_window(std::string win_name, cv::Vec2i new_points[2], cv::Vec2i point_buffer[2],
-    uint8_t selected_points_counter, bool* has_draw_ptr, void* image_ptr_opaque){
-    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
-    
-    if (*has_draw_ptr){
-        negativeRect(image_ptr, point_buffer[0][0], point_buffer[0][1], point_buffer[1][0],
-            point_buffer[1][1]);
-    }
-
-    if (selected_points_counter == 2){
-        negativeRect(image_ptr, new_points[0][0], new_points[0][1], new_points[1][0], new_points[1][1]);
-        *has_draw_ptr = true;
-        point_buffer[0] = new_points[0];
-        point_buffer[1] = new_points[1];
-        cv::imshow(win_name, *image_ptr);
-    } else{
-        if (*has_draw_ptr){cv::imshow(win_name, *image_ptr);}
-        *has_draw_ptr = false;
-    }
+uint32_t unmap_color(cv::Vec3b input_color){
+    uint32_t res = 0;
+    res |= (input_color[0] &lt;&lt; 16);
+    res |= (input_color[0] &lt;&lt; 8);
+    res |= input_color[2];
+    return res;
 }
-
-uint32_t closest_point_index(int x, int y, cv::Vec2i* point_list, uint8_t list_size){
-    uint32_t res_index = 0;
-    cv::Vec2i curr_point = point_list[0];
-    uint64_t min_square_distance = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
-    uint64_t candidate;
-    for (auto i = 1; i &lt; list_size; i++){
-        curr_point = point_list[i];
-        candidate = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
-        if (candidate &lt; min_square_distance){
-            min_square_distance = candidate;
-            res_index = i;
-        }
-    }
-    return res_index;
-}
-
-void mouse_callback(int event, int x, int y, int flags, void* userdata){
-    uint32_t index = 0;
-    switch (event)
-    {
-    case cv::EVENT_LBUTTONDOWN:
-        
-        if (selected_points_counter == 2){
-            index = closest_point_index(x, y, points, 2);
-        } else {
-            index = selected_points_counter;
-        }
-        points[index][0] = x;
-        points[index][1] = y;
-        selected_points_counter = selected_points_counter &lt; 2 ? selected_points_counter+1 : 2;
-        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
-        break;
-    case cv::EVENT_RBUTTONDOWN:
-        index = selected_points_counter;
-        selected_points_counter = selected_points_counter == 0 ? 0 : selected_points_counter-1;
-        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
-        break;
-    default:
-        break;
-    }
-}
-
-constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of two oposing vertex of a rectangle that will paint itself by the image's negative within its area. Left-click to select points, right-click to deselect one.";
 
 int main(int argc, char** argv) {
     std::string image_path;
     bool help_flag = false;
+    bool save_flag = false;
+    std::string output_prefix = default_output_path;
     
-    auto cli = lyra::help(help_flag).description(help_msg)
+    auto cli = lyra::cli() | lyra::help(help_flag).description(help_msg)
         | lyra::arg(image_path, "input_image_path")
             ("the path of the input image")
-            .required();
+            .required()
+        | (lyra::group()
+            | lyra::opt(save_flag)
+                ["-s"]["--save"]
+                ("saves extracted image as [output_prefix]_&lt;bitmask&gt;_filtered.png")
+                .required()
+            | lyra::arg(output_prefix, "output_prefix")
+                (std::string("specifies the prefix output_prefix when saving. if not provided, defaults to ")
+                    +default_output_path
+                )
+        );
+
 
     auto res = cli.parse({argc, argv});
     if (!res){
@@ -673,177 +623,80 @@ int main(int argc, char** argv) {
         std::cout &lt;&lt; cli &lt;&lt; "\n";
         exit(0);
     }
-    
-    cv::Mat image;
-    cv::Vec3b val;
 
-    image = cv::imread(image_path, cv::IMREAD_COLOR);
-    if (image.empty()){printf("Failed to read image in %s.\n", image_path.c_str()); exit(1);}
+    cv::Mat image = default_imread(image_path, cv::IMREAD_COLOR);
+    default_imshow(window_name+"_original", image);
 
+    uint32_t count = 0;
+    cv::Vec3b background_color = map_color(count); //map_color(0) maps to 0,0,0
+    cv::Vec3b target_color = map_color(count);
+    cv::Vec3b object_color = {255,255,255};
 
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL);
-    cv::setMouseCallback(window_name, mouse_callback, &amp;image);
-    cv::imshow(window_name, image);
-    cv::waitKey();
-    return 0;
-}</code></pre>
-</div>
-</div>
-</div>
-</details>
-<details>
-<summary class="title">switch_regions.cpp</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-c++ hljs" data-lang="c++">#include&lt;stdint.h&gt;
-#include&lt;iostream&gt;
-#include&lt;lyra/lyra.hpp&gt;
-#include&lt;opencv2/opencv.hpp&gt;
-
-std::string window_name = "switch_regions";
-bool pressing_left = false;
-bool slide_enable = false;
-cv::Mat redraw_image;
-cv::Vec2i last_pos = {0,0};
-cv::Vec2i velocity = {0,0};
-
-void redraw_window(std::string win_name, cv::Vec2i div_point, void* image_ptr_opaque){
-    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
-
-    if (div_point[0] == 0 || div_point[1] == 0){
-        printf("Cancelling redraw 'cause OpenCV doesn't like degenerate rectangles.\n");
-        return;
+    //removing objects touching the edges
+    for (auto j = 0; j &lt; image.cols; j++){
+        cv::Point2l pos_start = {j, 0};
+        cv::Point2l pos_end = {j, image.rows-1};
+        if (compare_colors(image.at&lt;typeof(target_color)&gt;(0, j),object_color)){
+            cv::floodFill(image, pos_start, background_color);
+        }
+        if (compare_colors(image.at&lt;typeof(target_color)&gt;(image.rows-1, j),object_color)){
+            cv::floodFill(image, pos_end, background_color);
+        }
     }
-    
+    for (auto i = 1; i &lt; image.rows-1; i++){
+        cv::Point2l pos_start = {0, i};
+        cv::Point2l pos_end = {image.cols-1, i};
+        if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, 0),object_color)){
+            cv::floodFill(image, pos_start, background_color);
+        }
+        if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, image.cols-1),object_color)){
+            cv::floodFill(image, pos_end, background_color);
+        }
+    }
 
-    auto left_div_rem = image_ptr-&gt;cols - div_point[0];
-    auto up_div_rem = image_ptr-&gt;rows - div_point[1];
-    
-    //this was the first try, it would get the cross on the opposite side
-    //cv::Mat top_left(*image_ptr, cv::Rect(0,0, div_point[0], div_point[1]));
-    //cv::Mat bottom_left(*image_ptr, cv::Rect(0,div_point[1], div_point[0], up_div_rem));
-    //cv::Mat top_right(*image_ptr, cv::Rect(div_point[0], 0, left_div_rem, div_point[1]));
-    //cv::Mat bottom_right(*image_ptr, cv::Rect(div_point[0], div_point[1], left_div_rem, up_div_rem));
-
-    //bottom_right.copyTo(
-    //    redraw_image(cv::Rect(0, 0, left_div_rem, up_div_rem))
-    //);
-    //bottom_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,0, div_point[0], up_div_rem))
-    //);
-    //top_right.copyTo(
-    //    redraw_image(cv::Rect(0, up_div_rem, left_div_rem, div_point[1]))
-    //);
-    //top_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,up_div_rem, div_point[0], div_point[1]))
-    //);
-
-    cv::Mat top_left(*image_ptr, cv::Rect(0,0, left_div_rem, up_div_rem));
-    cv::Mat bottom_left(*image_ptr, cv::Rect(0,up_div_rem, left_div_rem, div_point[1]));
-    cv::Mat top_right(*image_ptr, cv::Rect(left_div_rem, 0, div_point[0], up_div_rem));
-    cv::Mat bottom_right(*image_ptr, cv::Rect(left_div_rem, up_div_rem, div_point[0], div_point[1]));
-
-    bottom_right.copyTo(
-        redraw_image(cv::Rect(0, 0, div_point[0], div_point[1]))
-    );
-    bottom_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],0, left_div_rem, div_point[1]))
-    );
-    top_right.copyTo(
-        redraw_image(cv::Rect(0, div_point[1], div_point[0], up_div_rem))
-    );
-    top_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],div_point[1], left_div_rem, up_div_rem))
-    );
-
-    cv::imshow(win_name, redraw_image);
-}
-
-void mouse_callback(int event, int x, int y, int flags, void* userdata){
-    cv::Vec2i div_point = {x, y};
-    switch (event){
-    case cv::EVENT_LBUTTONDOWN:
-        pressing_left = true;
-        redraw_window(window_name, div_point, userdata);
-        last_pos[0] = x; last_pos[1] = y;
-        velocity[0] = 0; velocity[1] = 0;
-        break;
-    case cv::EVENT_LBUTTONUP:
-        pressing_left = false;
-        break;
-    case cv::EVENT_MBUTTONDOWN:
-        slide_enable = !slide_enable;
-        break;
-    case cv::EVENT_MOUSEMOVE:
-        if (pressing_left){
-            redraw_window(window_name, div_point, userdata);
-            if (slide_enable){
-                velocity[0] = x - last_pos[0]; velocity[1] = y - last_pos[1];
+    //labelling all objects
+    for (auto j = 0; j &lt; image.cols; j++){
+        for (auto i = 0; i &lt; image.rows; i++){
+            cv::Point2l pos = {j, i};
+            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j),object_color)){
+                count++;
+                cv::Vec3b target_color = map_color(count);
+                cv::floodFill(image, pos, target_color);
             }
-            last_pos[0] = x; last_pos[1] = y;
         }
-        break;
-    case cv::EVENT_RBUTTONDOWN:
-        cv::imshow(window_name, *((cv::Mat*) userdata));
-        velocity[0] = 0; velocity[1] = 0;
-        last_pos[0] = 0; last_pos[1] = 0;
-        break;
-    default:
-        break;
     }
-}
 
-void animation_loop(cv::Mat *image){
-    if (slide_enable &amp;&amp; !pressing_left){
-        last_pos[0] = (last_pos[0]+velocity[0]);
-        last_pos[1] = (last_pos[1]+velocity[1]);
-        last_pos[0] = last_pos[0] &lt; 0 ? image-&gt;cols + last_pos[0] : last_pos[0]%image-&gt;cols;
-        last_pos[1] = last_pos[1] &lt; 0 ? image-&gt;rows + last_pos[1] : last_pos[1]%image-&gt;rows;
+    cv::floodFill(image, {0,0}, object_color);
 
-        redraw_window(window_name, last_pos, (void*) image);
+    uint32_t bubble_count = 0;
+    uint32_t last_object = 0;
+    bool* has_bubble = new bool[count](); //initializes all values to false
+    for (auto j = 0; j &lt; image.cols; j++){
+        for (auto i = 0; i &lt; image.rows; i++){
+            cv::Point2l pos = {j, i};
+            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), background_color)){
+                if (!has_bubble[last_object-1]){
+                    bubble_count++;
+                    has_bubble[last_object-1] = true;
+                }
+                cv::floodFill(image, pos, map_color(last_object));
+            } else{
+                if (!compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), object_color)){
+                    last_object = unmap_color(image.at&lt;typeof(target_color)&gt;(i, j));
+                }
+            }
+        }
     }
-}
 
-constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of a division point that will divide and rearrange the image. Left-click to select a point, hold it to keep moving the point. Right-click resets. Middle (scroll-wheel) mouse button will enable/disable sliding mode, which estimates a linear velocity when you hold the image and keeps it after you release.";
-
-int main(int argc, char** argv) {
-    std::string image_path;
-    bool help_flag = false;
+    printf("Total labels: %u\n", count);
+    printf("Bubble count: %u\n", bubble_count);
     
-    auto cli = lyra::help(help_flag).description(help_msg)
-        | lyra::arg(image_path, "input_image_path")
-            ("the path of the input image")
-            .required();
-
-    auto res = cli.parse({argc, argv});
-    if (!res){
-        printf("Error. %s\n", res.message().c_str());
-        std::cout &lt;&lt; cli &lt;&lt; "\n";
-        exit(1);
+    default_imshow(window_name+"_labeled", image);
+    if (save_flag){
+        cv::imwrite(output_prefix + "_labeled.png", image);
     }
-    if (help_flag){
-        std::cout &lt;&lt; cli &lt;&lt; "\n";
-        exit(0);
-    }
-    
-    cv::Mat image;
-    cv::Vec3b val;
 
-    image = cv::imread(image_path);
-    if (image.empty()){printf("Failed to read image in %s.\n", image_path.c_str()); exit(1);}
-    redraw_image = image.clone();
-
-
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL);
-    cv::setMouseCallback(window_name, mouse_callback, &amp;image);
-    cv::imshow(window_name, image);
-    auto k = cv::waitKey(10);
-    while (k == -1){
-        animation_loop(&amp;image);
-        k = cv::waitKey(10);
-    }
-    
+    cv::waitKey();
     return 0;
 }</code></pre>
 </div>
@@ -854,7 +707,7 @@ int main(int argc, char** argv) {
 </div>
 </div>
 <div class="paragraph nav-footer">
-<p>↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="filestorage.html">filestorage.cpp</a> →</p>
+<p>← Previous: <a href="decoder.html">decoder.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a></p>
 </div>
 </div>
 <div id="footer" style="max-width: 80%;">

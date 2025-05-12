@@ -440,7 +440,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
              .nav-footer{text-align: center; margin-top: auto;}
              .nav-footer > p > a {white-space: nowrap;}</style>
 </head>
-<body id="pixels" class="book toc2 toc-left text-justify">
+<body id="filestorage" class="book toc2 toc-left text-justify">
 <div id="header" style="max-width: 80%;">
 <h1>Processamento Digital de Imagens</h1>
 <div class="details">
@@ -450,19 +450,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Sumário</div>
 <p><span class="toc-root"><a href="index.html">Processamento Digital de Imagens</a></span></p><ul class="sectlevel1">
-<li><a href="pixels.html"><span class="toc-current">regions.cpp e switch_regions.cpp</span></a>
+<li><a href="pixels.html">regions.cpp e switch_regions.cpp</a>
+</li>
+<li><a href="filestorage.html"><span class="toc-current">filestorage.cpp</span></a>
 <ul class="sectlevel2">
-<li><a href="pixels.html#_imagem_base">Imagem Base</a>
+<li><a href="filestorage.html#_relacionados">Relacionados</a>
 </li>
-<li><a href="pixels.html#_regions_cpp">regions.cpp</a>
-</li>
-<li><a href="pixels.html#_switch_regions_cpp">switch_regions.cpp</a>
-</li>
-<li><a href="pixels.html#_íntegra_dos_códigos">Íntegra dos códigos</a>
+<li><a href="filestorage.html#_íntegra_dos_códigos_2">Íntegra dos códigos</a>
 </li>
 </ul>
-</li>
-<li><a href="filestorage.html">filestorage.cpp</a>
 </li>
 <li><a href="decoder.html">decoder.cpp</a>
 </li>
@@ -473,84 +469,72 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="content" style="max-width: 80%;">
 <div class="sect1">
-<h2 id="pixels">regions.cpp e switch_regions.cpp</h2>
+<h2 id="filestorage">filestorage.cpp</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_imagem_base">Imagem Base</h3>
 <div class="paragraph">
-<p>A cobaia para os resultados desse exercício será a cachorra Lurana. Segue a imagem base onde podemos ver que ela está
-muito contente em permitir que eu use sua imagem.</p>
+<p>A parte de "que gere uma imagem de dimensões 256x256 pixels contendo uma senóide de 4 períodos com amplitude igual 127 desenhada na horizontal" é basicamente a mudança das variáveis do programa-exemplo da questão, então o que mais se
+alterou no código foi para análise.</p>
+</div>
+<div class="paragraph">
+<p>Antes mesmo de rodar qualquer coisa, vale pensar nas formas que diferenças entre as serializações da matriz poderiam aparecer. A "imagem" original é descrita pela função \(g(x, y) = 127*\sin{2 \pi f x} + 128\), com f representando a frequência, que está sendo calculada por \(f = \frac{P}{x_{max}}\) (com P sendo quantos períodos se deseja ter de 0 a \(x_{max}\)), e mapeia as pixels da função a valores em ponto flutuante. Para serializar os dados para PNG,
+realizamos a normalização (que, apesar de já poder causar perda de informação, não se costuma considerar) e a conversão
+para inteiro, onde necessariamente perdemos informação. Para a serialização para YAML, apesar de não ser feita essas
+transformações, temos a conversão dos valores para texto, onde pode haver perda de informação.</p>
+</div>
+<div class="paragraph">
+<p>Para fazer a comparação, podemos aproveitar do fato de que PNGs não causam perda de informação na sua encodificação e
+usar diretamente a matriz normalizada e convertida a partir da matriz original. A comparação pedida é entre a versão em PNG e a versão em YAML, mas também foram feitas algumas comparações extras com a matriz original para analisar as perdas da serialização por YAML.</p>
+</div>
+<div class="paragraph">
+<p>Para análise dos dados para plot, foi implementada uma flag para imprimir o .csv das diferenças na saída. Basta
+redirecionar a saída para um arquivo (como o <code>dados.csv</code> no repositório), daí basta executar o script <code>plot_data.py</code>
+com o caminho do .csv. Para a comparação pedida, temos:</p>
 </div>
 <div class="imageblock text-center">
 <div class="content">
-<img src="resources/Lulu.jpg" alt="Lulu" width="30%">
+<img src="resources/CROSS_DIFF_graph.svg" alt="CROSS DIFF graph" height="20%">
 </div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_regions_cpp">regions.cpp</h3>
-<div class="paragraph">
-<p>Para receber a entrada dos pontos do retângulo, explorei um pouco o <code>highgui</code> do OpenCV para poder receber entrada do
-mouse. Para selecionar o primeiro e segundo ponto basta usar o botão esquerdo. Para desselecionar um ponto, use o botão
-direito (não necessariamente desselecionará o último ponto que você selecionou). Caso já tenha selecionado dois pontos,
-selecionar outro ponto com o botão esquerdo irá mover a seleção anterior mais próxima ao ponto. Para sair, basta usar
-qualquer tecla ou fechar a janela.</p>
 </div>
 <div class="paragraph">
-<p>Para o efeito de negativo são pegos os valores da cor de cada pixel contido no retângulo e calculado seu complemento em
-relação ao máximo da capacidade de representação do tipo (para cada canal). Como não tem uma forma simples de fazer
-isso para cada tipo de representação (em algumas a forma de se calcular esse efeito pode ser completamente diferente),
-toda imagem é carregada como RGB.</p>
+<p>Onde a diferença é causada pela normalização e conversão para inteiro usadas para armazenar a imagem em inteiros de
+8 bits de capacidade. Esta diferença, entretanto, não é significante para a imagem a ser renderizada na tela,
+conforme podemos ver no gráfico a seguir da diferença entra a versão YAML normalizada e convertida para inteiros de
+8 bits.</p>
 </div>
 <div class="imageblock text-center">
 <div class="content">
-<img src="resources/regions_result.png" alt="regions result" width="30%">
+<img src="resources/INTEGER_DIFF_graph.svg" alt="INTEGER DIFF graph" height="20%">
 </div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_switch_regions_cpp">switch_regions.cpp</h3>
-<div class="paragraph">
-<p>Primeiramente, o "uso da classe <code>cv::Mat</code> e esus construtores para criar as regiões que serão trocadas" do enunciado do
-exercício se refere a capacidade de criar submatrizes de uma matriz pré-existente através da chamada dessa matriz com
-parâmetros para especificar a região de interesse (i.e, de onde a submatriz se baseia). Com isso, podemos pegar as
-coordenadas do ponto central e obter os vértices opostos de quatro regiões de interesse: \(Q_1 = ((0,0),(X/2 -1,Y/2 -1)); Q_2 = ((0,Y/2),(X/2 -1,Y)); Q_3 = ((X/2,0),(X-1,Y/2)); Q_4 = ((X/2,Y/2),(X-1,Y-1))\).</p>
 </div>
 <div class="paragraph">
-<p>Como bônus, generalizei o programa para que o ponto onde seja feito essa divisão fosse uma entrada, podendo ser posto
-com o botão esquerdo e arrastado segurando o botão; e adicionei um modo de <em>slide</em>, alternável pelo botão do meio do
-mouse, que calcula uma velocidade baseado no final do arrasto da seleção e a altera o ponto de divisão (pensei em
-chamar de pivô), dando a volta na matriz em caso fosse passar os limites da imagem.</p>
+<p>E enquanto poderíamos assumir que há um fator de perda causado pela serialização em YAML, vemos pelo próximo
+gráfico, comparando a versão original à serializada, que não há diferença.</p>
 </div>
 <div class="imageblock text-center">
 <div class="content">
-<img src="resources/switch_regions_result.png" alt="switch regions result" width="30%">
+<img src="resources/FLOAT_DIFF_graph.svg" alt="FLOAT DIFF graph" height="20%">
 </div>
 </div>
 <div class="paragraph">
-<p>Tive dois problemas interessantes nessa implementação, com o primeiro sendo: quando o ponto de divisão era tal que o
-lado de um dos quadrados fosse 0 (quando o ponto está no limite da imagem), o OpenCV não permitia a criação da
-submatriz. Este problema, por preguiça, não foi solucionado: você poderia checar a colisão e pular os retângulos que
-seriam inválidos ou algo do tipo, mas preferi só não fazer alterações para esse caso e retornar cedo nesses casos.</p>
+<p>Logo, a diferença entre a versão em PNG e a versão em YAML é a mesma diferença da versão em PNG para a versão
+original. Isso acontece pela formatação dos floats para texto em YAML: para evitar perda de informação na mantissa,
+são impressos em até 8 casas decimais de precisão, de forma que toda a mantissa de 24 bits para a especificação de
+número em ponto flutuante de 32 bits que costumamos usar (IEEE 754) seja mantida. Para verificar isso, encontrar um float com 8 casas decimais por um teste com <code>cat &lt;arquivo yaml&gt; | grep -m 1 -Po "[0-9]*\.[0-9]{8}" | head -n 1</code> é condição suficiente para provar que são usados 8 caracteres. Caso não tenha encontrado ou prefira uma prova mais concreta, tanto as funções de serialização para string <code>floatToString</code> e <code>doubleToString</code> do arquivo <code>persistence.cpp</code> (que implementa as funções gerais do FileStorage) garantem as 8 casas decimais quando necessário quanto a implementação específica da leitura e escrita para YAML em <code>persistence_yml.cpp</code> redireciona a escrita de valores em ponto flutuante para a função <code>doubleToString</code>.</p>
 </div>
-<div class="paragraph">
-<p>O segundo problema era na atualização da posição no modo <em>slide</em>. Para fazer o ajuste da posição para o intervalo da
-imagem, eu estava usando o operador % como módulo, enquanto que o operador calcula o resto da divisão inteira. Com isso,
-novos valores de posição continuariam negativos e subindo as exceções do OpenCV. Para corrigir isso, coloquei uma
-checagem de números negativos para fazer o <em>wrap around</em> com soma. (não poderia ser resolvível com o saturated_cast
-porque ele aceita tipos ao invés de valores máximos)</p>
-</div>
-<div class="videoblock text-center">
-<div class="title">Extra: vídeo do sliding com música de fundo</div>
-<div class="content">
-<iframe width="600" height="600" src="https://www.youtube.com/embed/VqviqsYr08Y?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<div class="sect2">
+<h3 id="_relacionados">Relacionados</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Página do <a href="https://github.com/opencv/opencv/blob/4.x/modules/core/src/persistence_yml.cpp">persistence_yml.cpp</a> e <a href="https://github.com/opencv/opencv/blob/4.x/modules/core/src/persistence.cpp">persistence.cpp</a>, que só soube onde procurar pelo doxygen do OpenCV.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_íntegra_dos_códigos">Íntegra dos códigos</h3>
+<h3 id="_íntegra_dos_códigos_2">Íntegra dos códigos</h3>
 <details>
-<summary class="title">regions.cpp</summary>
+<summary class="title">filestorage.cpp</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
@@ -558,110 +542,30 @@ porque ele aceita tipos ao invés de valores máximos)</p>
 #include&lt;iostream&gt;
 #include&lt;lyra/lyra.hpp&gt;
 #include&lt;opencv2/opencv.hpp&gt;
+#include &lt;string&gt;
 
-cv::Vec2i rectangle_vertex[2] = {{0,0},{0,0}};
-cv::Vec2i points[2] = {{0,0},{0,0}};
-uint8_t selected_points_counter = 0;
-std::string window_name = "regions";
-bool has_draw = false;
-bool first_two_done = false;
-
-inline constexpr uint64_t calc_sqr_dist(int x1, int y1, int x2, int y2){
-    return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
-}
-
-cv::Vec3b calc_negative_color(cv::Vec3b input_color){
-    cv::Vec3b res;
-    res[0] = 255 - input_color[0];
-    res[1] = 255 - input_color[1];
-    res[2] = 255 - input_color[2];
-    return res;
-}
-
-void negativeRect(cv::Mat* image, int x1, int y1, int x2, int y2){
-    int low_x, high_x, low_y, high_y;
-    if (x1 &gt; x2){low_x = x2; high_x = x1;} else {low_x = x1; high_x = x2;}
-    if (y1 &gt; y2){low_y = y2; high_y = y1;} else {low_y = y1; high_y = y2;}
-    for (int j = low_y; j &lt;= high_y; j++){
-        for (int i = low_x; i &lt;= high_x; i++){
-            image-&gt;at&lt;cv::Vec3b&gt;(j, i) = calc_negative_color(image-&gt;at&lt;cv::Vec3b&gt;(j, i));
-        }
-    }
-}
-
-void redraw_window(std::string win_name, cv::Vec2i new_points[2], cv::Vec2i point_buffer[2],
-    uint8_t selected_points_counter, bool* has_draw_ptr, void* image_ptr_opaque){
-    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
-    
-    if (*has_draw_ptr){
-        negativeRect(image_ptr, point_buffer[0][0], point_buffer[0][1], point_buffer[1][0],
-            point_buffer[1][1]);
-    }
-
-    if (selected_points_counter == 2){
-        negativeRect(image_ptr, new_points[0][0], new_points[0][1], new_points[1][0], new_points[1][1]);
-        *has_draw_ptr = true;
-        point_buffer[0] = new_points[0];
-        point_buffer[1] = new_points[1];
-        cv::imshow(win_name, *image_ptr);
-    } else{
-        if (*has_draw_ptr){cv::imshow(win_name, *image_ptr);}
-        *has_draw_ptr = false;
-    }
-}
-
-uint32_t closest_point_index(int x, int y, cv::Vec2i* point_list, uint8_t list_size){
-    uint32_t res_index = 0;
-    cv::Vec2i curr_point = point_list[0];
-    uint64_t min_square_distance = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
-    uint64_t candidate;
-    for (auto i = 1; i &lt; list_size; i++){
-        curr_point = point_list[i];
-        candidate = calc_sqr_dist(x,y, curr_point[0], curr_point[1]);
-        if (candidate &lt; min_square_distance){
-            min_square_distance = candidate;
-            res_index = i;
-        }
-    }
-    return res_index;
-}
-
-void mouse_callback(int event, int x, int y, int flags, void* userdata){
-    uint32_t index = 0;
-    switch (event)
-    {
-    case cv::EVENT_LBUTTONDOWN:
-        
-        if (selected_points_counter == 2){
-            index = closest_point_index(x, y, points, 2);
-        } else {
-            index = selected_points_counter;
-        }
-        points[index][0] = x;
-        points[index][1] = y;
-        selected_points_counter = selected_points_counter &lt; 2 ? selected_points_counter+1 : 2;
-        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
-        break;
-    case cv::EVENT_RBUTTONDOWN:
-        index = selected_points_counter;
-        selected_points_counter = selected_points_counter == 0 ? 0 : selected_points_counter-1;
-        redraw_window(window_name, points, rectangle_vertex, selected_points_counter, &amp;has_draw, userdata);
-        break;
-    default:
-        break;
-    }
-}
-
-constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of two oposing vertex of a rectangle that will paint itself by the image's negative within its area. Left-click to select points, right-click to deselect one.";
+constexpr const char* help_msg = "Showcase of truncation effects with YAML's human-readable serialization. The program generates a image in grayscale with f(x,y) = 127*sin(2*&lt;sine_period&gt;*x*PI/&lt;sine_period&gt;), serializes it to yaml, serializes a normalized version to png, reads back the yaml matrix, and then compare both the original float version with the yaml float version as well as the png and a normalized yaml version. All images on 8-bit grayscale.";
 
 int main(int argc, char** argv) {
-    std::string image_path;
     bool help_flag = false;
-    
+    bool print_diff_csv = false;
+    std::string img_path = "senoide_";
+    std::string yml_path = "senoide_";
+    u_int32_t SIDE = 256;
+    u_int32_t PERIODOS = 4;
+
     auto cli = lyra::help(help_flag).description(help_msg)
-        | lyra::arg(image_path, "input_image_path")
-            ("the path of the input image")
-            .required();
+        | lyra::opt(print_diff_csv)
+            ["-p"]["--csv"]["--printCSV"]
+            ("enables formatted csv output of the differences into the programs stdout")
+        | lyra::arg(SIDE, "image_side_size")
+            ("the image's side size in pixels, defaults to "+std::to_string(SIDE))
+        | lyra::arg(PERIODOS, "sine_period")
+            ("the sine wave's period, defaults to "+std::to_string(SIDE))
+        | lyra::arg(img_path, "output_image_prefix")
+            ("the prefix of the output PNG image path, defaults to "+img_path)
+        | lyra::arg(yml_path, "output_yaml_prefix")
+            ("the prefix of the output YAML file path, defaults to "+yml_path);
 
     auto res = cli.parse({argc, argv});
     if (!res){
@@ -673,18 +577,62 @@ int main(int argc, char** argv) {
         std::cout &lt;&lt; cli &lt;&lt; "\n";
         exit(0);
     }
+
+    yml_path +=std::to_string(SIDE)+"_"+std::to_string(PERIODOS)+".yaml";
+    img_path +=std::to_string(SIDE)+"_"+std::to_string(PERIODOS)+".png";
     
-    cv::Mat image;
-    cv::Vec3b val;
+    cv::Mat image_orig = cv::Mat::zeros(SIDE, SIDE, CV_32FC1);
+    cv::FileStorage fs(yml_path, cv::FileStorage::WRITE);
 
-    image = cv::imread(image_path, cv::IMREAD_COLOR);
-    if (image.empty()){printf("Failed to read image in %s.\n", image_path.c_str()); exit(1);}
+    for (int i = 0; i &lt; SIDE; i++) {
+        for (int j = 0; j &lt; SIDE; j++) {
+            image_orig.at&lt;float&gt;(i, j) = 127 * sin(2 * PERIODOS * j * M_PI / SIDE) + 128; //reordered to avoid integer division truncation
+        }
+    }
 
+    fs &lt;&lt; "mat" &lt;&lt; image_orig;
+    fs.release();
 
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL);
-    cv::setMouseCallback(window_name, mouse_callback, &amp;image);
-    cv::imshow(window_name, image);
+    cv::Mat image_png;
+    cv::normalize(image_orig, image_png, 0, 255, cv::NORM_MINMAX);
+    image_png.convertTo(image_png, CV_8U);
+    cv::imwrite(img_path, image_png);
+    cv::imshow("image from png", image_png);
+
+    fs.open(yml_path, cv::FileStorage::READ);
+
+    cv::Mat image_yaml;
+    cv::Mat image_yaml_normalized;
+    fs["mat"] &gt;&gt; image_yaml;
+    
+    cv::normalize(image_yaml, image_yaml_normalized, 0, 255, cv::NORM_MINMAX);
+    image_yaml_normalized.convertTo(image_yaml_normalized, CV_8U);
+    cv::imshow("image from yaml, normalized", image_yaml_normalized);
+    //right now: image_yaml holds the float32 image read from the yaml file,
+    //  image_yaml_normalized holds its normalized uint8 version,
+    //  image_orig holds the original float32 image,
+    //  image_png holds the normalized uint8 version of image_orig (which is the same as the png)
+
+    cv::Mat float_diff_img; //to check yaml's serialization diff
+    image_orig -= image_yaml;
+    cv::normalize(image_orig, float_diff_img, 0, 255, cv::NORM_MINMAX);
+    float_diff_img.convertTo(float_diff_img, CV_8U);
+    cv::imshow("image_orig - image_yaml, normalized", float_diff_img);
+    
+    cv::Mat norm_diff; //to check if the difference, if any, matters after conversion to integer
+    image_png.convertTo(norm_diff, CV_16S); 
+    norm_diff -= image_yaml_normalized;
+    cv::normalize(norm_diff, norm_diff, 0, 255, cv::NORM_MINMAX);
+    norm_diff.convertTo(norm_diff, CV_8U);
+    
+    cv::imshow("image_png - image_yaml_normalized, normalized", norm_diff);
     cv::waitKey();
+    if (print_diff_csv){
+        printf("FLOAT_DIFF, INTEGER_DIFF, CROSS_DIFF\n");
+        for (int j = 0; j &lt; SIDE; j++) {
+            printf("%f, %d, %f\n", image_orig.at&lt;float&gt;(0, j), norm_diff.at&lt;uint8_t&gt;(0, j), image_yaml.at&lt;float&gt;(0, j)-image_png.at&lt;uint8_t&gt;(0,j));
+        }
+    }
     return 0;
 }</code></pre>
 </div>
@@ -692,160 +640,21 @@ int main(int argc, char** argv) {
 </div>
 </details>
 <details>
-<summary class="title">switch_regions.cpp</summary>
+<summary class="title">plot_data.py</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-c++ hljs" data-lang="c++">#include&lt;stdint.h&gt;
-#include&lt;iostream&gt;
-#include&lt;lyra/lyra.hpp&gt;
-#include&lt;opencv2/opencv.hpp&gt;
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">import pandas as pd
+import sys
+import matplotlib.pyplot as plt
 
-std::string window_name = "switch_regions";
-bool pressing_left = false;
-bool slide_enable = false;
-cv::Mat redraw_image;
-cv::Vec2i last_pos = {0,0};
-cv::Vec2i velocity = {0,0};
+data = pd.read_csv(sys.argv[1], sep=", ", engine='python')
 
-void redraw_window(std::string win_name, cv::Vec2i div_point, void* image_ptr_opaque){
-    cv::Mat* image_ptr = (cv::Mat*) image_ptr_opaque;
-
-    if (div_point[0] == 0 || div_point[1] == 0){
-        printf("Cancelling redraw 'cause OpenCV doesn't like degenerate rectangles.\n");
-        return;
-    }
-    
-
-    auto left_div_rem = image_ptr-&gt;cols - div_point[0];
-    auto up_div_rem = image_ptr-&gt;rows - div_point[1];
-    
-    //this was the first try, it would get the cross on the opposite side
-    //cv::Mat top_left(*image_ptr, cv::Rect(0,0, div_point[0], div_point[1]));
-    //cv::Mat bottom_left(*image_ptr, cv::Rect(0,div_point[1], div_point[0], up_div_rem));
-    //cv::Mat top_right(*image_ptr, cv::Rect(div_point[0], 0, left_div_rem, div_point[1]));
-    //cv::Mat bottom_right(*image_ptr, cv::Rect(div_point[0], div_point[1], left_div_rem, up_div_rem));
-
-    //bottom_right.copyTo(
-    //    redraw_image(cv::Rect(0, 0, left_div_rem, up_div_rem))
-    //);
-    //bottom_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,0, div_point[0], up_div_rem))
-    //);
-    //top_right.copyTo(
-    //    redraw_image(cv::Rect(0, up_div_rem, left_div_rem, div_point[1]))
-    //);
-    //top_left.copyTo(
-    //    redraw_image(cv::Rect(left_div_rem,up_div_rem, div_point[0], div_point[1]))
-    //);
-
-    cv::Mat top_left(*image_ptr, cv::Rect(0,0, left_div_rem, up_div_rem));
-    cv::Mat bottom_left(*image_ptr, cv::Rect(0,up_div_rem, left_div_rem, div_point[1]));
-    cv::Mat top_right(*image_ptr, cv::Rect(left_div_rem, 0, div_point[0], up_div_rem));
-    cv::Mat bottom_right(*image_ptr, cv::Rect(left_div_rem, up_div_rem, div_point[0], div_point[1]));
-
-    bottom_right.copyTo(
-        redraw_image(cv::Rect(0, 0, div_point[0], div_point[1]))
-    );
-    bottom_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],0, left_div_rem, div_point[1]))
-    );
-    top_right.copyTo(
-        redraw_image(cv::Rect(0, div_point[1], div_point[0], up_div_rem))
-    );
-    top_left.copyTo(
-        redraw_image(cv::Rect(div_point[0],div_point[1], left_div_rem, up_div_rem))
-    );
-
-    cv::imshow(win_name, redraw_image);
-}
-
-void mouse_callback(int event, int x, int y, int flags, void* userdata){
-    cv::Vec2i div_point = {x, y};
-    switch (event){
-    case cv::EVENT_LBUTTONDOWN:
-        pressing_left = true;
-        redraw_window(window_name, div_point, userdata);
-        last_pos[0] = x; last_pos[1] = y;
-        velocity[0] = 0; velocity[1] = 0;
-        break;
-    case cv::EVENT_LBUTTONUP:
-        pressing_left = false;
-        break;
-    case cv::EVENT_MBUTTONDOWN:
-        slide_enable = !slide_enable;
-        break;
-    case cv::EVENT_MOUSEMOVE:
-        if (pressing_left){
-            redraw_window(window_name, div_point, userdata);
-            if (slide_enable){
-                velocity[0] = x - last_pos[0]; velocity[1] = y - last_pos[1];
-            }
-            last_pos[0] = x; last_pos[1] = y;
-        }
-        break;
-    case cv::EVENT_RBUTTONDOWN:
-        cv::imshow(window_name, *((cv::Mat*) userdata));
-        velocity[0] = 0; velocity[1] = 0;
-        last_pos[0] = 0; last_pos[1] = 0;
-        break;
-    default:
-        break;
-    }
-}
-
-void animation_loop(cv::Mat *image){
-    if (slide_enable &amp;&amp; !pressing_left){
-        last_pos[0] = (last_pos[0]+velocity[0]);
-        last_pos[1] = (last_pos[1]+velocity[1]);
-        last_pos[0] = last_pos[0] &lt; 0 ? image-&gt;cols + last_pos[0] : last_pos[0]%image-&gt;cols;
-        last_pos[1] = last_pos[1] &lt; 0 ? image-&gt;rows + last_pos[1] : last_pos[1]%image-&gt;rows;
-
-        redraw_window(window_name, last_pos, (void*) image);
-    }
-}
-
-constexpr const char* help_msg = "Loads the image at `input_image_path` into display and allow selection of a division point that will divide and rearrange the image. Left-click to select a point, hold it to keep moving the point. Right-click resets. Middle (scroll-wheel) mouse button will enable/disable sliding mode, which estimates a linear velocity when you hold the image and keeps it after you release.";
-
-int main(int argc, char** argv) {
-    std::string image_path;
-    bool help_flag = false;
-    
-    auto cli = lyra::help(help_flag).description(help_msg)
-        | lyra::arg(image_path, "input_image_path")
-            ("the path of the input image")
-            .required();
-
-    auto res = cli.parse({argc, argv});
-    if (!res){
-        printf("Error. %s\n", res.message().c_str());
-        std::cout &lt;&lt; cli &lt;&lt; "\n";
-        exit(1);
-    }
-    if (help_flag){
-        std::cout &lt;&lt; cli &lt;&lt; "\n";
-        exit(0);
-    }
-    
-    cv::Mat image;
-    cv::Vec3b val;
-
-    image = cv::imread(image_path);
-    if (image.empty()){printf("Failed to read image in %s.\n", image_path.c_str()); exit(1);}
-    redraw_image = image.clone();
-
-
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL);
-    cv::setMouseCallback(window_name, mouse_callback, &amp;image);
-    cv::imshow(window_name, image);
-    auto k = cv::waitKey(10);
-    while (k == -1){
-        animation_loop(&amp;image);
-        k = cv::waitKey(10);
-    }
-    
-    return 0;
-}</code></pre>
+for mode in data.columns:
+    fig, ax = plt.subplots(figsize=[15,3])
+    plt.scatter(data.index.array, data[mode])
+    plt.title(mode)
+    plt.savefig(f"{mode}_graph.svg")</code></pre>
 </div>
 </div>
 </div>
@@ -854,7 +663,7 @@ int main(int argc, char** argv) {
 </div>
 </div>
 <div class="paragraph nav-footer">
-<p>↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="filestorage.html">filestorage.cpp</a> →</p>
+<p>← Previous: <a href="pixels.html">regions.cpp e switch_regions.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="decoder.html">decoder.cpp</a> →</p>
 </div>
 </div>
 <div id="footer" style="max-width: 80%;">
