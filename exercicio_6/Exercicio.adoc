@@ -1,0 +1,46 @@
+== convolution.cpp e depthoffield.cpp
+
+=== Vídeo base
+Para teste do `convolution.cpp` foi usado um trecho do filme Samurai Cop. Muito provavelmente aparecerão mais trechos
+em outras tarefas pra compensar o tempo que tive pra pegar o filme.
+
+=== convolution.cpp
+
+Para o código foi apenas a adaptação para vídeo e uso de uma função para gerar o filtro média. Pelo vídeo abaixo podemos
+ver as diferentes intensidades de borramento conforme o kernel aumenta, em especial na aparência da cerca.
+
+video::NUE7zA0poAU[youtube,align=center, width=600, height=600]
+
+
+=== depthoffield.cpp
+
+O diferencial entre a solução proposta e a que implementei aqui foi a substituição a partir de `>=`. Usando simplesmente
+o "maior que" alguns pixels cuja vizinhança não se alterava em relação a eles permaneciam como o frame preto inicial do
+vídeo. Com `>=` essas áreas mudarão para cada frame, mas pelo menos terão mais a cara da tela ao invés desses artefatos
+do início do vídeo. Pelo vídeo abaixo é possível ver, de cima para baixo, a máscara gerada pela comparação dos dados
+filtrados com a matriz de máximos, a efeito de `depthoffield`, e o vídeo base da questão.
+
+video::NxfvAgecW2Q[youtube,align=center, width=600, height=600]
+
+O efeito definitivamente válido, mas dá uma sensação de borrado perceptível. Como, aparentemente, parte do borrado
+original dos frames é capturado pelo efeito, então os objetos também são destorcidos.
+
+=== Íntegra dos códigos
+
+.convolution.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::convolution.cpp[]
+----
+====
+
+.depthoffield.cpp
+[%collapsible]
+====
+[source,c++, linenums]
+----
+include::depthoffield.cpp[]
+----
+====
