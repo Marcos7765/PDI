@@ -20,7 +20,7 @@ vídeo. Com `>=` essas áreas mudarão para cada frame, mas pelo menos terão ma
 do início do vídeo. Pelo vídeo abaixo é possível ver, de cima para baixo, a máscara gerada pela comparação dos dados
 filtrados com a matriz de máximos, a efeito de `depthoffield`, e o vídeo base da questão.
 
-video::NxfvAgecW2Q[youtube,align=center, width=600, height=600]
+video::v8ocuXQLrBc[youtube,align=center, width=600, height=600]
 
 O efeito definitivamente válido, mas dá uma sensação de borrado perceptível. Como, aparentemente, parte do borrado
 original dos frames é capturado pelo efeito, então os objetos também são destorcidos.
