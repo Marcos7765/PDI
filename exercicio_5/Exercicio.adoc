@@ -1,69 +1,43 @@
-== labeling.cpp
+== histogram.cpp
 
-O nome do arquivo está errado e fiquei com preguiça de trackear e ajeitar por aí, o certo é labelling.
+=== Vídeo base
+O vídeo base é uma gravação com OBS do videogame Session, editada para não ter tanto tempo morto do caminho entre as
+áreas de cada cor.
 
-Primeiramente, para o problema de contagem proposto, ele ocorrerá a partir do momento que tiverem 255 ou mais objetos e
-a varredura pela matriz alcance o segundo pixel do 255o objeto (alternativamente, caso ele tenha só um pixel, o 256o
-objeto estoura o contador, fazendo ele voltar pra 0), como a cor que o identifica é a mesma de objetos não
-identificados, ele é contado novamente e o valor do contador estoura.
+=== Resolução
 
-Para solucionar esse problema existem várias opções, mas quase todas (para não dizer todas) separarão a cor do
-identificador do objeto do seu valor no contador e aumentarão a capacidade do contador: você pode alterar o floodfill
-para adicionar a posição do pixel a uma lista de objetos, onde cada objeto tem sua lista de pixeis, e a cor pintada é a
-mesma do fundo; você pode usar uma imagem RGB e um mapa de cores para relacionar cada valor do contador à tripla RGB,
-expandindo a capacidade para 24 bits; ou você pode somente aumentar a capacidade do contador e da escala de cinza da
-imagem, com riscos de não poder visualizar a informação a depender do visualizador (tanto software quanto hardware).
-Apesar de não ser necessário, a implementação do labelling pro próximo problema usa um mapa de cores.
+*O parágrafo a seguir partiu de uma péssima leitura do enunciado da primeira questão. Não foi feito equalizador algum de
+histogramas, aqui foi um baita lapso.
 
-Para a contagem das bolhas, um único detalhe impedia o uso da solução apresentada no vídeo e (de onde eu lembro) da
-sala de aula: a possibilidade de uma bolha conter múltiplos buracos. Como solução, podemos usar do fato de que todo
-buraco está envolto por um objeto colorido de acordo com seu identificador, logo cada buraco é alcançado após já se ter
-alcançado o objeto associado a ele. Guardando a informação do último objeto acessado e uma lista de flags onde cada flag
-se refere a um objeto ter ou não bolhas, podemos evitar a contagem de uma bolha com mais de um buraco como a de
-múltiplas bolhas. O excerto de código abaixo faz essa desambiguação:
+Para esta tarefa, a maior parte do tempo foi tentando arranjar uma forma de passar a câmera virtual do OBS no Windows
+para o WSL. Eventualmente instalei e compilei o próprio `histogram.cpp` no Windows (desagradável), para então não gostar
+de como ficou o vídeo gravado ao vivo. Reescrevi para que o programa aceite o caminho/URI para o vídeo de entrada, e
+mais algumas modificações para o tamanho da tela ser igual ao da entrada (provavelmente deixa o programa mais pesado,
+mas sendo por vídeo gravado é mais tranquilo). No vídeo podemos ver minha perícia no skate em volta de três áreas, cada
+uma mais próxima de um tom de cor e consequentemente com histogramas das respectivas cores mais puxado à direita em
+relação ao demais. Infelizmente durante a gravação não chegou o período noturno, mas dá para ver o deslocamento conjunto
+dos histogramas para valores mais altos na primeira área, onde a piscina azul claro puxa bastante as cores, e o
+deslocamento à esquerda em geral a partir do meio do vídeo, onde as áreas tem mais sombra.
 
-[source,c++, linenums]
-----
-    //background_color e object_color estão trocados
-    uint32_t bubble_count = 0;
-    uint32_t last_object = 0;
-    bool* has_bubble = new bool[count](); //initializes all values to false
-    for (auto j = 0; j < image.cols; j++){
-        for (auto i = 0; i < image.rows; i++){
-            cv::Point2l pos = {j, i};
-            if (compare_colors(image.at<typeof(target_color)>(i, j), background_color)){
-                if (!has_bubble[last_object-1]){
-                    bubble_count++;
-                    has_bubble[last_object-1] = true;
-                }
-                cv::floodFill(image, pos, map_color(last_object));
-            } else{
-                if (!compare_colors(image.at<typeof(target_color)>(i, j), object_color)){
-                    last_object = unmap_color(image.at<typeof(target_color)>(i, j));
-                }
-            }
-        }
-    }
-----
-E testando na imagem ligeiramente alterada para conter uma bolha com múltiplos buracos abaixo:
-image::bolhas_2.png[height=20%,align=center]
+Para detecção de movimento decidi usar a norma L1 da diferença frame a frame do histograma vermelho dividida por um
+terço dos pixels da imagem. A escolha por vermelho foi arbitrária, enquanto que a norma L1 foi pela existência da função
+`cv::absdiff`. Inicialmente não havia divisão alguma do valor do histograma, então erroneamente "normalizei" pelo número
+de pixeis ao invés do número de bins do histograma. Quando o valor, como de se esperar, ficou pequeno demais, eu ainda
+não tinha percebido o erro na normalização, e pensei então que "se estou fazendo uma média por pixel mas os pixels
+afetam três canais ao invés de um, eu deveria compensar para 1/3 deles". Ainda era um número baixo, mas mais
+trabalhável, e depois de fazer uns ajustes finos cheguei no limiar de 0.065 usado no vídeo. Para alerta de movimento eu
+aproveitei uma gambiarra pra sombreamento que fiz mês passado e estou usando uma mensagem no canto superior direito.
+Incluí também a diferença enquanto fazia o ajuste fino e preferi por mantê-la.
 
-Temos 21 objetos, dos quais 7 são bolhas, representados na imagem resultado (a imagem não representa as bolhas):
-
-image::labelling_labelled.png[height=20%,align=center]
-
-=== Relacionados
-
-- O próprio link:https://youtu.be/aexbvMzCGK4?list=PLWWAoQUirHNruwCBxOgBhHKXdf7et_rAO[vídeo da playlist de PDI] sobre o
-exercício.
+video::NxfvAgecW2Q[youtube,align=center, width=600, height=600]
 
 === Íntegra dos códigos
 
-.labeling.cpp
+.histogram.cpp
 [%collapsible]
 ====
 [source,c++, linenums]
 ----
-include::labeling.cpp[]
+include::histogram.cpp[]
 ----
 ====
