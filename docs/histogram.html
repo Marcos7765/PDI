@@ -440,7 +440,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
              .nav-footer{text-align: center; margin-top: auto;}
              .nav-footer > p > a {white-space: nowrap;}</style>
 </head>
-<body id="labelling" class="book toc2 toc-left text-justify">
+<body id="histogram" class="book toc2 toc-left text-justify">
 <div id="header" style="max-width: 80%;">
 <h1>Processamento Digital de Imagens</h1>
 <div class="details">
@@ -456,15 +456,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="decoder.html">decoder.cpp</a>
 </li>
-<li><a href="labelling.html"><span class="toc-current">labeling.cpp</span></a>
-<ul class="sectlevel2">
-<li><a href="labelling.html#_relacionados_2">Relacionados</a>
+<li><a href="labelling.html">labeling.cpp</a>
 </li>
-<li><a href="labelling.html#_íntegra_dos_códigos_4">Íntegra dos códigos</a>
+<li><a href="histogram.html"><span class="toc-current">histogram.cpp</span></a>
+<ul class="sectlevel2">
+<li><a href="histogram.html#_vídeo_base">Vídeo base</a>
+</li>
+<li><a href="histogram.html#_resolução">Resolução</a>
+</li>
+<li><a href="histogram.html#_íntegra_dos_códigos_5">Íntegra dos códigos</a>
 </li>
 </ul>
-</li>
-<li><a href="histogram.html">histogram.cpp</a>
 </li>
 <li><a href="convolution.html">convolution.cpp e depthoffield.cpp</a>
 </li>
@@ -473,85 +475,53 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="content" style="max-width: 80%;">
 <div class="sect1">
-<h2 id="labelling">labeling.cpp</h2>
+<h2 id="histogram">histogram.cpp</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_vídeo_base">Vídeo base</h3>
 <div class="paragraph">
-<p>O nome do arquivo está errado e fiquei com preguiça de trackear e ajeitar por aí, o certo é labelling.</p>
-</div>
-<div class="paragraph">
-<p>Primeiramente, para o problema de contagem proposto, ele ocorrerá a partir do momento que tiverem 255 ou mais objetos e
-a varredura pela matriz alcance o segundo pixel do 255o objeto (alternativamente, caso ele tenha só um pixel, o 256o
-objeto estoura o contador, fazendo ele voltar pra 0), como a cor que o identifica é a mesma de objetos não
-identificados, ele é contado novamente e o valor do contador estoura.</p>
-</div>
-<div class="paragraph">
-<p>Para solucionar esse problema existem várias opções, mas quase todas (para não dizer todas) separarão a cor do
-identificador do objeto do seu valor no contador e aumentarão a capacidade do contador: você pode alterar o floodfill
-para adicionar a posição do pixel a uma lista de objetos, onde cada objeto tem sua lista de pixeis, e a cor pintada é a
-mesma do fundo; você pode usar uma imagem RGB e um mapa de cores para relacionar cada valor do contador à tripla RGB,
-expandindo a capacidade para 24 bits; ou você pode somente aumentar a capacidade do contador e da escala de cinza da
-imagem, com riscos de não poder visualizar a informação a depender do visualizador (tanto software quanto hardware).
-Apesar de não ser necessário, a implementação do labelling pro próximo problema usa um mapa de cores.</p>
-</div>
-<div class="paragraph">
-<p>Para a contagem das bolhas, um único detalhe impedia o uso da solução apresentada no vídeo e (de onde eu lembro) da
-sala de aula: a possibilidade de uma bolha conter múltiplos buracos. Como solução, podemos usar do fato de que todo
-buraco está envolto por um objeto colorido de acordo com seu identificador, logo cada buraco é alcançado após já se ter
-alcançado o objeto associado a ele. Guardando a informação do último objeto acessado e uma lista de flags onde cada flag
-se refere a um objeto ter ou não bolhas, podemos evitar a contagem de uma bolha com mais de um buraco como a de
-múltiplas bolhas. O excerto de código abaixo faz essa desambiguação:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-c++ hljs" data-lang="c++">    //background_color e object_color estão trocados
-    uint32_t bubble_count = 0;
-    uint32_t last_object = 0;
-    bool* has_bubble = new bool[count](); //initializes all values to false
-    for (auto j = 0; j &lt; image.cols; j++){
-        for (auto i = 0; i &lt; image.rows; i++){
-            cv::Point2l pos = {j, i};
-            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), background_color)){
-                if (!has_bubble[last_object-1]){
-                    bubble_count++;
-                    has_bubble[last_object-1] = true;
-                }
-                cv::floodFill(image, pos, map_color(last_object));
-            } else{
-                if (!compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), object_color)){
-                    last_object = unmap_color(image.at&lt;typeof(target_color)&gt;(i, j));
-                }
-            }
-        }
-    }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>E testando na imagem ligeiramente alterada para conter uma bolha com múltiplos buracos abaixo:
-image::bolhas_2.png[height=20%,align=center]</p>
-</div>
-<div class="paragraph">
-<p>Temos 21 objetos, dos quais 7 são bolhas, representados na imagem resultado (a imagem não representa as bolhas):</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="resources/labelling_labelled.png" alt="labelling labelled" height="20%">
+<p>O vídeo base é uma gravação com OBS do videogame Session, editada para não ter tanto tempo morto do caminho entre as
+áreas de cada cor.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_relacionados_2">Relacionados</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>O próprio <a href="https://youtu.be/aexbvMzCGK4?list=PLWWAoQUirHNruwCBxOgBhHKXdf7et_rAO">vídeo da playlist de PDI</a> sobre o
-exercício.</p>
-</li>
-</ul>
+<h3 id="_resolução">Resolução</h3>
+<div class="paragraph">
+<p>*O parágrafo a seguir partiu de uma péssima leitura do enunciado da primeira questão. Não foi feito equalizador algum de
+histogramas, aqui foi um baita lapso.</p>
+</div>
+<div class="paragraph">
+<p>Para esta tarefa, a maior parte do tempo foi tentando arranjar uma forma de passar a câmera virtual do OBS no Windows
+para o WSL. Eventualmente instalei e compilei o próprio <code>histogram.cpp</code> no Windows (desagradável), para então não gostar
+de como ficou o vídeo gravado ao vivo. Reescrevi para que o programa aceite o caminho/URI para o vídeo de entrada, e
+mais algumas modificações para o tamanho da tela ser igual ao da entrada (provavelmente deixa o programa mais pesado,
+mas sendo por vídeo gravado é mais tranquilo). No vídeo podemos ver minha perícia no skate em volta de três áreas, cada
+uma mais próxima de um tom de cor e consequentemente com histogramas das respectivas cores mais puxado à direita em
+relação ao demais. Infelizmente durante a gravação não chegou o período noturno, mas dá para ver o deslocamento conjunto
+dos histogramas para valores mais altos na primeira área, onde a piscina azul claro puxa bastante as cores, e o
+deslocamento à esquerda em geral a partir do meio do vídeo, onde as áreas tem mais sombra.</p>
+</div>
+<div class="paragraph">
+<p>Para detecção de movimento decidi usar a norma L1 da diferença frame a frame do histograma vermelho dividida por um
+terço dos pixels da imagem. A escolha por vermelho foi arbitrária, enquanto que a norma L1 foi pela existência da função
+<code>cv::absdiff</code>. Inicialmente não havia divisão alguma do valor do histograma, então erroneamente "normalizei" pelo número
+de pixeis ao invés do número de bins do histograma. Quando o valor, como de se esperar, ficou pequeno demais, eu ainda
+não tinha percebido o erro na normalização, e pensei então que "se estou fazendo uma média por pixel mas os pixels
+afetam três canais ao invés de um, eu deveria compensar para 1/3 deles". Ainda era um número baixo, mas mais
+trabalhável, e depois de fazer uns ajustes finos cheguei no limiar de 0.065 usado no vídeo. Para alerta de movimento eu
+aproveitei uma gambiarra pra sombreamento que fiz mês passado e estou usando uma mensagem no canto superior direito.
+Incluí também a diferença enquanto fazia o ajuste fino e preferi por mantê-la.</p>
+</div>
+<div class="videoblock text-center">
+<div class="content">
+<iframe width="600" height="600" src="https://www.youtube.com/embed/NxfvAgecW2Q?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_íntegra_dos_códigos_4">Íntegra dos códigos</h3>
+<h3 id="_íntegra_dos_códigos_5">Íntegra dos códigos</h3>
 <details>
-<summary class="title">labeling.cpp</summary>
+<summary class="title">histogram.cpp</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
@@ -561,60 +531,36 @@ exercício.</p>
 #include&lt;opencv2/opencv.hpp&gt;
 #include&lt;utils.hpp&gt;
 
-std::string window_name = "labelling";
-constexpr const char* help_msg = "Labelling algorithm example";
-constexpr const char* default_output_path = "labelling";
-
-template &lt;typename T, uint8_t bytesize = 8&gt;
-constexpr inline T gen_ones_mask(uint8_t length, uint8_t leftshift){
-    return (( ~((T) 0) &gt;&gt; (sizeof(T)*bytesize - length)) &lt;&lt; leftshift);
-}
-
-bool compare_colors(cv::Vec3b color_a, cv::Vec3b color_b){
-    bool res = true;
-    for (auto i = 0; i &lt; 3; i++){
-        res &amp;= color_a[i] == color_b[i];
-    }
-    return res;
-}
-
-//aint linear but surely is injective for input_value &lt; 2^25 -1
-cv::Vec3b map_color(uint32_t input_value){
-    cv::Vec3b result = {0,0,0};
-    result[0] = (input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 16)) &gt;&gt; 16;
-    result[1] = (input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 8)) &gt;&gt; 8;
-    result[2] = input_value &amp; gen_ones_mask&lt;uint32_t&gt;(8, 0);
-    return result;
-}
-
-uint32_t unmap_color(cv::Vec3b input_color){
-    uint32_t res = 0;
-    res |= (input_color[0] &lt;&lt; 16);
-    res |= (input_color[0] &lt;&lt; 8);
-    res |= input_color[2];
-    return res;
-}
+std::string window_name = "histogram";
+constexpr const char* help_msg = "Embeds RGB histograms and a configurable motion detector based on the red histogram immediate difference";
+constexpr const char* default_output_path = "histogram_video.mkv";
 
 int main(int argc, char** argv) {
-    std::string image_path;
     bool help_flag = false;
     bool save_flag = false;
-    std::string output_prefix = default_output_path;
+    std::string input_file;
+    std::string output_path = default_output_path;
+    double diff_threshold = 0.065;
+    double histogram_image_scale = 5.;
     
     auto cli = lyra::cli() | lyra::help(help_flag).description(help_msg)
-        | lyra::arg(image_path, "input_image_path")
-            ("the path of the input image")
+        | lyra::arg(input_file, "input_file_path")
+            (std::string("the video file path/uri to be open"))
             .required()
         | (lyra::group()
             | lyra::opt(save_flag)
                 ["-s"]["--save"]
                 ("saves extracted image as [output_prefix]_&lt;bitmask&gt;_filtered.png")
                 .required()
-            | lyra::arg(output_prefix, "output_prefix")
-                (std::string("specifies the prefix output_prefix when saving. if not provided, defaults to ")
+            | lyra::arg(output_path, "output_path")
+                (std::string("specifies the output_path when saving, so it also affects codecs. if not provided, defaults to ")
                     +default_output_path
                 )
-        );
+            )
+        | lyra::arg(diff_threshold, "diff_threshold")
+            (std::string("how much difference between histogram is needed to trigger the motion detector, defaults to")
+                +std::to_string(diff_threshold)
+            );
 
 
     auto res = cli.parse({argc, argv});
@@ -628,79 +574,112 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
-    cv::Mat image = default_imread(image_path, cv::IMREAD_COLOR);
-    default_imshow(window_name+"_original", image);
+    cv::Mat image;
+    int width, height;
+    int camera;
+    cv::VideoCapture cap;
+    std::vector&lt;cv::Mat&gt; planes;
+    cv::Mat histR, histG, histB;
+    int nbins = 64;
+    float range[] = {0, 255};
+    const float *histrange = { range };
+    bool uniform = true;
+    bool acummulate = false;
+    int key;
 
-    uint32_t count = 0;
-    cv::Vec3b background_color = map_color(count); //map_color(0) maps to 0,0,0
-    cv::Vec3b target_color = map_color(count);
-    cv::Vec3b object_color = {255,255,255};
+    cap.open(input_file);
 
-    //removing objects touching the edges
-    for (auto j = 0; j &lt; image.cols; j++){
-        cv::Point2l pos_start = {j, 0};
-        cv::Point2l pos_end = {j, image.rows-1};
-        if (compare_colors(image.at&lt;typeof(target_color)&gt;(0, j),object_color)){
-            cv::floodFill(image, pos_start, background_color);
-        }
-        if (compare_colors(image.at&lt;typeof(target_color)&gt;(image.rows-1, j),object_color)){
-            cv::floodFill(image, pos_end, background_color);
-        }
+    if(!cap.isOpened()){
+        std::cout &lt;&lt; "Error with capture device\n";
+        return -1;
     }
-    for (auto i = 1; i &lt; image.rows-1; i++){
-        cv::Point2l pos_start = {0, i};
-        cv::Point2l pos_end = {image.cols-1, i};
-        if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, 0),object_color)){
-            cv::floodFill(image, pos_start, background_color);
-        }
-        if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, image.cols-1),object_color)){
-            cv::floodFill(image, pos_end, background_color);
-        }
-    }
+  
+    width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 
-    //labelling all objects
-    for (auto j = 0; j &lt; image.cols; j++){
-        for (auto i = 0; i &lt; image.rows; i++){
-            cv::Point2l pos = {j, i};
-            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j),object_color)){
-                count++;
-                cv::Vec3b target_color = map_color(count);
-                cv::floodFill(image, pos, target_color);
-            }
-        }
-    }
+    std::cout &lt;&lt; "largura = " &lt;&lt; width &lt;&lt; std::endl;
+    std::cout &lt;&lt; "altura  = " &lt;&lt; height &lt;&lt; std::endl;
 
-    cv::floodFill(image, {0,0}, object_color);
-
-    uint32_t bubble_count = 0;
-    uint32_t last_object = 0;
-    bool* has_bubble = new bool[count](); //initializes all values to false
-    for (auto j = 0; j &lt; image.cols; j++){
-        for (auto i = 0; i &lt; image.rows; i++){
-            cv::Point2l pos = {j, i};
-            if (compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), background_color)){
-                if (!has_bubble[last_object-1]){
-                    bubble_count++;
-                    has_bubble[last_object-1] = true;
-                }
-                cv::floodFill(image, pos, map_color(last_object));
-            } else{
-                if (!compare_colors(image.at&lt;typeof(target_color)&gt;(i, j), object_color)){
-                    last_object = unmap_color(image.at&lt;typeof(target_color)&gt;(i, j));
-                }
-            }
-        }
-    }
-
-    printf("Total labels: %u\n", count);
-    printf("Bubble count: %u\n", bubble_count);
+    int histw = nbins*histogram_image_scale, histh = histogram_image_scale*nbins/2;
+    cv::Mat histImgR(histh, histw, CV_8UC3, cv::Scalar(0,0,0));
+    cv::Mat histImgG(histh, histw, CV_8UC3, cv::Scalar(0,0,0));
+    cv::Mat histImgB(histh, histw, CV_8UC3, cv::Scalar(0,0,0));
     
-    default_imshow(window_name+"_labeled", image);
-    if (save_flag){
-        cv::imwrite(output_prefix + "_labeled.png", image);
-    }
 
-    cv::waitKey();
+    cv::VideoWriter video_writer;
+    if(save_flag){
+        cv::Size video_size(width,height);
+        video_writer.open(output_path, cv::VideoWriter::fourcc('M', 'P', '4', 'V'), cap.get(cv::CAP_PROP_FPS),
+            video_size);
+
+        if (!video_writer.isOpened()){
+            std::cout &lt;&lt; "deu pau na gravação\n";
+            exit(1);
+        }
+    }
+    cap &gt;&gt; image;
+    cv::split (image, planes);
+    cv::calcHist(&amp;planes[0], 1, 0, cv::Mat(), histB, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+    cv::calcHist(&amp;planes[1], 1, 0, cv::Mat(), histG, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+    cv::calcHist(&amp;planes[2], 1, 0, cv::Mat(), histR, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+    cv::Mat old_hist_r = histR.clone();
+    
+    while(cap.isOpened()){
+        if (!cap.read(image)){break;} //when the cap has no frame to return (eg end of the video) it returns false,
+        //otherwise image wouldn't be valid and opencv would raise an exception
+        cv::split (image, planes);
+        cv::calcHist(&amp;planes[0], 1, 0, cv::Mat(), histB, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+        cv::calcHist(&amp;planes[1], 1, 0, cv::Mat(), histG, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+        cv::calcHist(&amp;planes[2], 1, 0, cv::Mat(), histR, 1, &amp;nbins, &amp;histrange, uniform, acummulate);
+
+        cv::Mat diff_img;
+        cv::absdiff(old_hist_r, histR, diff_img);
+        double diff_sum = cv::sum(diff_img).val[0]*3/(image.rows*image.cols);
+            cv::putText(image, "Diff: "+std::to_string(diff_sum), {image.cols*5/8, image.rows*3/16}, cv::FONT_HERSHEY_PLAIN, 2., cv::Scalar(0, 0, 0), 12);
+            cv::putText(image, "Diff: "+std::to_string(diff_sum), {image.cols*5/8, image.rows*3/16}, cv::FONT_HERSHEY_PLAIN, 2., cv::Scalar(255, 255, 255), 3);
+        if (diff_sum &gt; diff_threshold){
+            cv::putText(image, "Movimento!", {image.cols*5/8, image.rows*1/8}, cv::FONT_HERSHEY_PLAIN, 4., cv::Scalar(0, 0, 0), 12);
+            cv::putText(image, "Movimento!", {image.cols*5/8, image.rows*1/8}, cv::FONT_HERSHEY_PLAIN, 4., cv::Scalar(255, 255, 255), 3);
+        }
+
+        old_hist_r = histR.clone();
+
+        cv::normalize(histR, histR, 0, histImgR.rows, cv::NORM_MINMAX, -1, cv::Mat());
+        cv::normalize(histG, histG, 0, histImgG.rows, cv::NORM_MINMAX, -1, cv::Mat());
+        cv::normalize(histB, histB, 0, histImgB.rows, cv::NORM_MINMAX, -1, cv::Mat());
+
+        histImgR.setTo(cv::Scalar(0));
+        histImgG.setTo(cv::Scalar(0));
+        histImgB.setTo(cv::Scalar(0));
+
+        for(int i=0; i&lt;nbins; i++){
+            cv::rectangle(histImgR,
+                cv::Point(i*histogram_image_scale, histh-cvRound(histR.at&lt;float&gt;(i))),
+                cv::Point((i+1)*histogram_image_scale, histh),
+                cv::Scalar(0, 0, 255), cv::FILLED);
+            cv::rectangle(histImgG,
+                cv::Point(i*histogram_image_scale, histh-cvRound(histG.at&lt;float&gt;(i))),
+                cv::Point((i+1)*histogram_image_scale, histh),
+                cv::Scalar(0, 255, 0), cv::FILLED);
+            cv::rectangle(histImgB,
+                cv::Point(i*histogram_image_scale, histh-cvRound(histB.at&lt;float&gt;(i))),
+                cv::Point((i+1)*histogram_image_scale, histh),
+                cv::Scalar(255, 0, 0), cv::FILLED);
+        }
+        histImgR.copyTo(image(cv::Rect(0, 0       ,histw, histh)));
+        histImgG.copyTo(image(cv::Rect(0, histh   ,histw, histh)));
+        histImgB.copyTo(image(cv::Rect(0, 2*histh ,histw, histh)));
+
+        
+        
+        if(save_flag){video_writer &lt;&lt; image;}
+        //video_writer &lt;&lt; image;
+        //else{
+            cv::imshow("image", image);
+            key = cv::waitKey(30);
+            if (key == 27) {break;}
+        //}
+    }
     return 0;
 }</code></pre>
 </div>
@@ -711,7 +690,7 @@ int main(int argc, char** argv) {
 </div>
 </div>
 <div class="paragraph nav-footer">
-<p>← Previous: <a href="decoder.html">decoder.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="histogram.html">histogram.cpp</a> →</p>
+<p>← Previous: <a href="labelling.html">labeling.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="convolution.html">convolution.cpp e depthoffield.cpp</a> →</p>
 </div>
 </div>
 <div id="footer" style="max-width: 80%;">

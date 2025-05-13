@@ -30,3 +30,11 @@ include::exercicio_3/Exercicio.adoc[]
 [[labelling]]
 [desc="Exercícios do Capítulo 11. Preenchendo regiões"]
 include::exercicio_4/Exercicio.adoc[]
+
+[[histogram]]
+[desc="Exercícios do Capítulo 12. Manipulação de histogramas"]
+include::exercicio_5/Exercicio.adoc[]
+
+[[convolution]]
+[desc="Exercícios do Capítulo 14, Filtragem no domínio espacial I - Convolução"]
+include::exercicio_6/Exercicio.adoc[]
