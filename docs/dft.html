@@ -463,8 +463,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="convolution.html">convolution.cpp e depthoffield.cpp</a>
 </li>
 <li><a href="dft.html"><span class="toc-current">dft.cpp</span></a>
+<ul class="sectlevel2">
+<li><a href="dft.html#_resolução_2">Resolução</a>
 </li>
-<li><a href="_resolução_2.html">Resolução</a>
+<li><a href="dft.html#_extras">Extras</a>
+</li>
+<li><a href="dft.html#_íntegra_dos_códigos_7">Íntegra dos códigos</a>
+</li>
+</ul>
 </li>
 <li><a href="homomorphic-filter.html">dftfilter.cpp</a>
 </li>
@@ -482,10 +488,234 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 mudança no código base para ter o resultado. Aqui é mais teoria e cálculo mesmo, só fiz adicionar no código para poder
 ler YAML.</p>
 </div>
+<div class="sect2">
+<h3 id="_resolução_2">Resolução</h3>
+<div class="paragraph">
+<p>O espectro de magnitude do sinal em frequência da imagem ficou como abaixo.</p>
+</div>
+<div class="imageblock text-center">
+<div class="content">
+<img src="resources/resources/magn_png_version.png" alt="magn png version" height="20%">
+</div>
+</div>
+<div class="paragraph">
+<p>É possível observar vários pontos centralizados verticalmente no meio da figura, representando frequências puramente
+horizontais (isto é, componentes verticais da frequência nulos). Os valores de destaque são os três mais próximos ao
+centro da imagem, representado tanto a frequência do seno quanto um artefato descrito abaixo.</p>
+</div>
+<div class="paragraph">
+<p>Na teoria, podemos avaliar a transformada da própria função que gerou a imagem. No exercício do FileStorage, vimos que
+a função usada para gerar essas imagens é \(g(x, y) = 127*\sin{2 \pi \frac{P}{M} x} + 128\), com P sendo o
+número de períodos contidos na imagem (contando no dedo a imagem que transformamos tinha 8 períodos). Como a transformada bidimensional de Fourier discreta é linear, podemos aplicá-la em isoladamente no termo senoidal:</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\[\begin{align}
+F(u,v) &amp;= \frac{1}{MN}\sum_0^{M-1}\sum_0^{N-1}{127\sin{(\frac{2 \pi u_0}{M} x)}e^{-j 2\pi (\frac{u}{M}x + \frac{v}{N}y)}} \\
+
+&amp;= \frac{1}{M}\sum_0^{M-1}g(x)(\frac{1}{N}\sum_0^{N-1}1e^{-j\frac{2 \pi v}{N}y}) \\
+&amp;= \frac{\delta(v)}{M}\sum_0^{M-1}g(x) = \frac{\delta(v)}{M} \sum_0^{N-1}{127\sin{(\frac{2 \pi u_0}{M} x)}e^{-j 2\pi (\frac{u}{M}x)}} \\
+
+&amp;= \frac{127\delta(v)j}{2}(\delta(u + u_0) - \delta(u - u_0)) \\
+&amp;= \frac{127}{2}j(\delta(u + u_0, v) - \delta(u - u_0, v))
+
+\end{align}\]
+</div>
+</div>
+<div class="paragraph">
+<p>E então somá-la junto à transformada de \(g_1(x,y): 128\), que é \(128 \delta(u,v)\), obtendo uma magnitude expressa por \(|G(u,v)| = 128\delta(u,v) + \frac{127}{2}(\delta(u + u_0) + \delta(u - u_0))\). Daí já temos uma diferença: o FFTW NÃO aplica a normalização pelas dimensões da imagem (a divisão por \(MN\)), e isso impacta negativamente na normalização por log da imagem (um pixel que teria 1 na transformada inversa analítica acaba tendo 65536, e o acréscimo de 1 a todos os valores o deixaria em 65537 enquanto que os zeros ficariam 1).</p>
+</div>
+<div class="paragraph">
+<p>A outra diferença, mais impactante, é causada pela discretização do seno na imagem original. Esses erros de arrendondamento se confundem como componentes senoidais em outras frequências, resultando nos demais pontos no eixo horizontal. Se usássemos a imagem serializada em YAML com ponto flutuante, como fizemos no exercício 2, podemos diminuir esse erro (se você ainda decidir resserealizar para YAML ou só colocar para escrever os valores dos pontos, verá que o erro foi nulo nesse caso), obtendo a seguinte imagem:</p>
+</div>
+<div class="imageblock text-center">
+<div class="content">
+<img src="resources/resources/magn_yaml_version.png" alt="magn yaml version" height="20%">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_extras">Extras</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>O cálculo do seno foi feito com uma ajuda de uma tabela de propriedades e de transformadas de fourier para frequência linear (não confundir com aquelas que já usam omega direto ao invés de 2 pi f);</p>
+</li>
+<li>
+<p>Antes de fazer o cálculo da transformada do seno eu estava procurando em materiais de PDI por algum jeito bom de explicar o cálculo, e acabei encontrando o assunto de imagens híbridas, ilusões feitas através da mesclagem das componentes de alta frequência de uma imagem com as componentes de baixa frequência de outra imagem (a fase em específico, que é quem guarda informação dos formatos). Acho que pode ter espaço pra uma tarefa com elas aqui, ainda mais sendo algo que dá para "brincar". Segue abaixo um teste usando o gerador disponível em <a href="https://charliecm.github.io/hybrid-image/" class="bare">https://charliecm.github.io/hybrid-image/</a> pra fazer uma imagem híbrida de um Gol bola marrom e um ovo de páscoa do Botafogo (que foram pré-processados no gimp antes pra facilitar a geração)</p>
+</li>
+</ul>
+</div>
+<div class="imageblock text-center">
+<div class="content">
+<img src="resources/resources/imagem_hibrida_comparacao.png" alt="imagem hibrida comparacao" height="10%">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_íntegra_dos_códigos_7">Íntegra dos códigos</h3>
+<details>
+<summary class="title">dft.cpp</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-c++ hljs" data-lang="c++">#include &lt;iostream&gt;
+#include &lt;opencv2/opencv.hpp&gt;
+#include &lt;vector&gt;
+#include&lt;iostream&gt;
+#include&lt;lyra/lyra.hpp&gt;
+#include&lt;string&gt;
+
+void swapQuadrants(cv::Mat&amp; image) {
+    cv::Mat tmp, A, B, C, D;
+
+    // se a imagem tiver tamanho impar, recorta a regiao para o maior
+    // tamanho par possivel (-2 = 1111...1110)
+    image = image(cv::Rect(0, 0, image.cols &amp; -2, image.rows &amp; -2));
+    
+    int centerX = image.cols / 2;
+    int centerY = image.rows / 2;
+    
+    // rearranja os quadrantes da transformada de Fourier de forma que
+    // a origem fique no centro da imagem
+    // A B   -&gt;  D C
+    // C D       B A
+    A = image(cv::Rect(0, 0, centerX, centerY));
+    B = image(cv::Rect(centerX, 0, centerX, centerY));
+    C = image(cv::Rect(0, centerY, centerX, centerY));
+    D = image(cv::Rect(centerX, centerY, centerX, centerY));
+    
+    // swap quadrants (Top-Left with Bottom-Right)
+    A.copyTo(tmp);
+    D.copyTo(A);
+    tmp.copyTo(D);
+    
+    // swap quadrant (Top-Right with Bottom-Left)
+    C.copyTo(tmp);
+    B.copyTo(C);
+    tmp.copyTo(B);
+}
+
+constexpr const char* help_msg = "Calculates the 2D DFT of the input image";
+constexpr const char* default_output_path = "dft_frequency.png";
+
+int main(int argc, char** argv) {
+    
+    bool help_flag = false;
+    bool save_flag = false;
+    std::string input_file;
+    std::string output_prefix = default_output_path;
+
+    auto cli = lyra::cli() | lyra::help(help_flag).description(help_msg)
+        | lyra::arg(input_file, "input_file_path")
+            (std::string("the image/filestorage compatible input file path"))
+            .required()
+        | (lyra::group()
+            | lyra::opt(save_flag)
+                ["-s"]["--save"]
+                ("saves extracted image as &lt;output_path&gt;")
+                .required()
+            | lyra::arg(output_prefix, "output_path")
+                (std::string("specifies the output_path when saving. if not provided, defaults to ")
+                    +default_output_path
+                )
+            );
+
+
+    auto res = cli.parse({argc, argv});
+    if (!res){
+        printf("Error. %s\n", res.message().c_str());
+        std::cout &lt;&lt; cli &lt;&lt; "\n";
+        exit(1);
+    }
+    if (help_flag){
+        std::cout &lt;&lt; cli &lt;&lt; "\n";
+        exit(0);
+    }
+    
+    cv::Mat image, padded, complexImage;
+    std::vector&lt;cv::Mat&gt; planos;
+
+    if (input_file.ends_with("ml") || input_file.ends_with("json")){
+        cv::FileStorage fs(input_file, cv::FileStorage::READ);
+        fs["mat"] &gt;&gt; image;
+    } else{
+        image = imread(input_file, cv::IMREAD_GRAYSCALE);
+    }
+    if (image.empty()) {
+        std::cout &lt;&lt; "Erro abrindo imagem" &lt;&lt; argv[1] &lt;&lt; std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // expande a imagem de entrada para o melhor tamanho no qual a DFT pode ser
+    // executada, preenchendo com zeros a lateral inferior direita.
+    int dft_M = cv::getOptimalDFTSize(image.rows);
+    int dft_N = cv::getOptimalDFTSize(image.cols);
+    cv::copyMakeBorder(image, padded, 0, dft_M - image.rows, 0,
+                        dft_N - image.cols, cv::BORDER_CONSTANT,
+                        cv::Scalar::all(0));
+
+    // prepara a matriz complexa para ser preenchida
+    // primeiro a parte real, contendo a imagem de entrada
+    planos.push_back(cv::Mat_&lt;float&gt;(padded));
+    // depois a parte imaginaria com valores nulos
+    planos.push_back(cv::Mat::zeros(padded.size(), CV_32F));
+
+    // combina os planos em uma unica estrutura de dados complexa
+    cv::merge(planos, complexImage);
+
+    // calcula a DFT
+    cv::dft(complexImage, complexImage);
+    swapQuadrants(complexImage);
+
+    // planos[0] : Re(DFT(image)
+    // planos[1] : Im(DFT(image)
+    cv::split(complexImage, planos);
+
+    // calcula o espectro de magnitude e de fase (em radianos)
+    cv::Mat magn, fase;
+    cv::cartToPolar(planos[0], planos[1], magn, fase, false);
+    cv::normalize(fase, fase, 0, 1, cv::NORM_MINMAX);
+
+    // caso deseje apenas o espectro de magnitude da DFT, use:
+    cv::magnitude(planos[0], planos[1], magn);
+
+    std::cout &lt;&lt; magn.at&lt;float&gt;(128,128) &lt;&lt; "\n";
+    std::cout &lt;&lt; magn.at&lt;float&gt;(128,120) &lt;&lt; "\n";
+    std::cout &lt;&lt; magn.at&lt;float&gt;(128,119) &lt;&lt; "\n";
+    std::cout &lt;&lt; magn.at&lt;float&gt;(128,136) &lt;&lt; "\n";
+
+    // some uma constante para evitar log(0)
+    // log(1 + sqrt(Re(DFT(image))^2 + Im(DFT(image))^2))
+    magn += cv::Scalar::all(1);
+
+    // calcula o logaritmo da magnitude para exibir
+    // com compressao de faixa dinamica
+    cv::log(magn, magn);
+    cv::normalize(magn, magn, 0, 255, cv::NORM_MINMAX);
+    magn.convertTo(magn, CV_8U);
+
+    // exibe as imagens processadas
+    cv::imshow("Imagem", image);
+    cv::imshow("Espectro de magnitude", magn);
+    cv::imshow("Espectro de fase", fase);
+
+    if (save_flag){
+        cv::imwrite(output_prefix, magn);
+    }
+
+    cv::waitKey();
+    return EXIT_SUCCESS;
+}</code></pre>
+</div>
+</div>
+</div>
+</details>
+</div>
 </div>
 </div>
 <div class="paragraph nav-footer">
-<p>← Previous: <a href="convolution.html">convolution.cpp e depthoffield.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="_resolução_2.html">Resolução</a> →</p>
+<p>← Previous: <a href="convolution.html">convolution.cpp e depthoffield.cpp</a> | ↑ Up: <a href="index.html">Processamento Digital de Imagens</a> | Next: <a href="homomorphic-filter.html">dftfilter.cpp</a> →</p>
 </div>
 </div>
 <div id="footer" style="max-width: 80%;">

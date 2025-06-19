@@ -5,7 +5,7 @@ Este exercício não encaixou tão bem no formato em que faço essas respostas, 
 mudança no código base para ter o resultado. Aqui é mais teoria e cálculo mesmo, só fiz adicionar no código para poder
 ler YAML.
 
-== Resolução
+=== Resolução
 
 O espectro de magnitude do sinal em frequência da imagem ficou como abaixo.
 
