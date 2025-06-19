@@ -6,7 +6,7 @@ A imagem base é uma captura de tela do jogo Dark Souls. Pouco depois do resto d
 notebook antigo num computador da casa, fazendo o favor sacana de deixar o sistema em inglês e com ferramentas livres 
 ("precisa do photoshop? já tem o gimp", "word? libreoffice writer").
 
-image::resources/dark_souls.jpg[height=20%, align=center]
+image::dark_souls.jpg[height=20%, align=center]
 
 De algum jeito, o pessoal tomou gosto por videogames *assistindo* outras pessoas jogarem na internet, e a ideia de
 perder tempo assistindo alguém jogar ao invés de perder tempo jogando me incomodou tanto que também adicionei a
@@ -30,7 +30,7 @@ si, para visualização.
 Os parâmetros usados para a imagem abaixo definem os parâmetros padrão do filtro: mínimo 0.0; máximo 1.0; corte 4
 (absoluto); e ordem 2.
 
-image::resources/filtered_souls.png[height=20%, align=center]
+image::filtered_souls.png[height=20%, align=center]
 
 Pela imagem podemos observar a parede direita indo mais fundo no corredor, junto com mais detalhes do escudo e do bicho
 encarando o jogador de longe, <seção redatada para a aba abaixo, consegue discernir algum detalhe do bicho? Tente e

@@ -9,7 +9,7 @@ ler YAML.
 
 O espectro de magnitude do sinal em frequência da imagem ficou como abaixo.
 
-image::resources/magn_png_version.png[height=20%, align=center]
+image::magn_png_version.png[height=20%, align=center]
 
 É possível observar vários pontos centralizados verticalmente no meio da figura, representando frequências puramente
 horizontais (isto é, componentes verticais da frequência nulos). Os valores de destaque são os três mais próximos ao
@@ -37,7 +37,7 @@ E então somá-la junto à transformada de latexmath:[g_1(x,y): 128], que é lat
 
 A outra diferença, mais impactante, é causada pela discretização do seno na imagem original. Esses erros de arrendondamento se confundem como componentes senoidais em outras frequências, resultando nos demais pontos no eixo horizontal. Se usássemos a imagem serializada em YAML com ponto flutuante, como fizemos no exercício 2, podemos diminuir esse erro (se você ainda decidir resserealizar para YAML ou só colocar para escrever os valores dos pontos, verá que o erro foi nulo nesse caso), obtendo a seguinte imagem:
 
-image::resources/magn_yaml_version.png[height=20%, align=center]
+image::magn_yaml_version.png[height=20%, align=center]
 
 === Extras
 
@@ -45,7 +45,7 @@ image::resources/magn_yaml_version.png[height=20%, align=center]
 
 - Antes de fazer o cálculo da transformada do seno eu estava procurando em materiais de PDI por algum jeito bom de explicar o cálculo, e acabei encontrando o assunto de imagens híbridas, ilusões feitas através da mesclagem das componentes de alta frequência de uma imagem com as componentes de baixa frequência de outra imagem (a fase em específico, que é quem guarda informação dos formatos). Acho que pode ter espaço pra uma tarefa com elas aqui, ainda mais sendo algo que dá para "brincar". Segue abaixo um teste usando o gerador disponível em https://charliecm.github.io/hybrid-image/ pra fazer uma imagem híbrida de um Gol bola marrom e um ovo de páscoa do Botafogo (que foram pré-processados no gimp antes pra facilitar a geração)
 
-image::resources/imagem_hibrida_comparacao.png[height=10%, align=center]
+image::imagem_hibrida_comparacao.png[height=10%, align=center]
 
 === Íntegra dos códigos
 

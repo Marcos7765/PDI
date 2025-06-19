@@ -5,15 +5,15 @@
 Para esta tarefa, teremos múltiplas imagens base. A primeira é a capa do álbum 5 de Joan Baez, que foi o primeiro álbum
 que apareceu na minha biblioteca do Youtube Music com uma fotografia que parecia legal de se fazer pontilhismo.
 
-image::resources/joan_baez_5.png[height=20%, align=center]
+image::joan_baez_5.png[height=20%, align=center]
 
 Para experimentar em imagens com detalhes diferentes, também fiz testes com uma foto da Igreja de Pedra, da cidade de
 Rio de Contas (Bahia), de não-sei-quantos-mas-muitos anos atrás; e uma foto do céu sobre a lente de um óculos escuros
 rosê durante o eclipse solar em 14 de Outubro de 2023.
 
-image::resources/igreja.png[height=20%, align=center]
+image::igreja.png[height=20%, align=center]
 
-image::resources/eclipse.png[height=20%, align=center]
+image::eclipse.png[height=20%, align=center]
 
 === pontilhismo.cpp
 
@@ -51,22 +51,22 @@ célula), que também tem seu raio gerado aleatoriamente (com parâmetros menore
 aumentava o valor dos limiares, diminuíam-se o tamanho dos raios e das células. O primeiro resultado, mostrado abaixo,
 foi com valores obtidos por ajuste-fino.
 
-image::resources/baez_pontos.jpg[height=20%, align=center]
+image::baez_pontos.jpg[height=20%, align=center]
 
 Desses valores obtidos em ajuste fino, tentei montar uma relação entre os parâmetros da imagem de fundo (tamanho da
 célula, parâmetros da dist. do raio) e o número de filtros de canny — sem isso, os detalhes capturados pelo filtro, como
 no de cima, são muitos. Usando os valores hardcoded (agora comentados no código) e uma gaussiana de média e desvio
 padrão 0 pros pontos do fundo, podemos ver o impacto:
 
-image::resources/baez_detalhes.png[height=20%, align=center]
+image::baez_detalhes.png[height=20%, align=center]
 
 De bônus, com isso podemos variar tanto a granularidade do fundo quanto dos detalhes pelos parâmetros, como nessas 
 animações para um tamanho de célula 30x30 pixels com raios variando de 1 a 30 (igreja) e tamanho de célula 10x10 com
 raios variando de 1 a 10 (eclipse):
 
-image::resources/igreja.gif[height=20%, align=center]
+image::igreja.gif[height=20%, align=center]
 
-image::resources/eclipse.gif[height=20%, align=center]
+image::eclipse.gif[height=20%, align=center]
 
 Uma ideia possível seria de usar isso para redução de palheta de cores, usando o canny da imagem original enquanto a
 imagem de onde as cores são extraídas já estão reduzidas/você aplica a redução no ponto amostrado/você junta os pontos
