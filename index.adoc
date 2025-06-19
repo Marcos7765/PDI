@@ -38,3 +38,15 @@ include::exercicio_5/Exercicio.adoc[]
 [[convolution]]
 [desc="Exercícios do Capítulo 14, Filtragem no domínio espacial I - Convolução"]
 include::exercicio_6/Exercicio.adoc[]
+
+[[dft]]
+[desc="Exercícios do Capítulo 16, A Transformada Discretea de Fourier"]
+include::exercicio_8/Exercicio.adoc[]
+
+[[convolution]]
+[desc="Exercícios do Capítulo 17, Filtragem no Domínio da Frequência"]
+include::exercicio_9/Exercicio.adoc[]
+
+[[convolution]]
+[desc="Exercícios do Capítulo 19, Detecção de bordas com o algoritmo de Canny"]
+include::exercicio_10/Exercicio.adoc[]
